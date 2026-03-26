@@ -1,4 +1,4 @@
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/StoreContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +8,7 @@ interface NavbarProps {
 }
 
 const Navbar = ({ onCartOpen }: NavbarProps) => {
-  const { cartCount } = useAppStore();
+  const { cartCount, currentUser, logout } = useAppStore();
 
   return (
     <nav className="flex justify-between items-center px-5 py-4 sticky top-0 glass z-50 border-b border-border/50">
@@ -16,11 +16,23 @@ const Navbar = ({ onCartOpen }: NavbarProps) => {
         Stick<em className="text-gradient italic">yy.</em>
       </Link>
       <div className="flex items-center gap-2">
+        {currentUser && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground tracking-wide">{currentUser}</span>
+            <button
+              onClick={logout}
+              className="w-6 h-6 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+              title="Log out"
+            >
+              <LogOut className="w-3 h-3 text-muted-foreground" />
+            </button>
+          </div>
+        )}
         <Link
           to="/admin"
           className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] border border-border/60 rounded-full px-3 py-1.5 hover:bg-card hover:border-border transition-all duration-200"
         >
-          Login
+          Admin
         </Link>
         <button
           onClick={onCartOpen}

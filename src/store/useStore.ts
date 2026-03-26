@@ -71,9 +71,26 @@ function loadData(): DB {
   return { ...defaultDB, stickers: [...defaultDB.stickers], categories: [...defaultDB.categories], orders: [] };
 }
 
+const USER_KEY = "stickyy_user";
+
 export function useStore() {
   const [db, setDb] = useState<DB>(loadData);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [currentUser, setCurrentUser] = useState<string | null>(() => {
+    try { return localStorage.getItem(USER_KEY); } catch { return null; }
+  });
+
+  const login = useCallback((name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setCurrentUser(trimmed);
+    localStorage.setItem(USER_KEY, trimmed);
+  }, []);
+
+  const logout = useCallback(() => {
+    setCurrentUser(null);
+    localStorage.removeItem(USER_KEY);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
@@ -193,13 +210,29 @@ export function useStore() {
     }));
   }, []);
 
+  const editComment = useCallback((stickerId: number, commentId: number, newText: string) => {
+    setDb((prev) => ({
+      ...prev,
+      stickers: prev.stickers.map((s) => {
+        if (s.id !== stickerId) return s;
+        return {
+          ...s,
+          comments: (s.comments || []).map((c) =>
+            c.id === commentId ? { ...c, text: newText } : c
+          ),
+        };
+      }),
+    }));
+  }, []);
+
   return {
     db, cart, cartTotal, cartCount,
+    currentUser, login, logout,
     addToCart, changeQty, removeFromCart,
     submitOrder,
     addSticker, updateSticker, deleteSticker,
     addCategory, deleteCategory,
     markOrderDone, deleteOrder,
-    addReaction, addComment, deleteComment,
+    addReaction, addComment, deleteComment, editComment,
   };
 }
