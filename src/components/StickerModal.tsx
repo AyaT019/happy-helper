@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAppStore } from "@/store/StoreContext";
 import { Sticker, ReactionType } from "@/store/useStore";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Heart, ThumbsUp, Laugh } from "lucide-react";
+import { X, Send, Heart, ThumbsUp, Laugh, Pencil, Trash2, Check, LogIn } from "lucide-react";
 
 const reactionConfig: { type: ReactionType; icon: typeof Heart; label: string }[] = [
   { type: "like", icon: ThumbsUp, label: "Like" },
@@ -16,24 +16,49 @@ interface Props {
 }
 
 const StickerModal = ({ sticker, onClose }: Props) => {
-  const { addReaction, addComment, addToCart } = useAppStore();
+  const { addReaction, addComment, addToCart, deleteComment, editComment, currentUser, login } = useAppStore();
   const [commentText, setCommentText] = useState("");
-  const [authorName, setAuthorName] = useState("");
   const [clickedReaction, setClickedReaction] = useState<ReactionType | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+  const [loginInput, setLoginInput] = useState("");
+  const [showLogin, setShowLogin] = useState(false);
 
   const reactions = sticker.reactions || { love: 0, haha: 0, like: 0 };
   const comments = sticker.comments || [];
 
   const handleReaction = (type: ReactionType) => {
+    if (!currentUser) { setShowLogin(true); return; }
     addReaction(sticker.id, type);
     setClickedReaction(type);
     setTimeout(() => setClickedReaction(null), 400);
   };
 
   const handleComment = () => {
-    if (!commentText.trim()) return;
-    addComment(sticker.id, authorName.trim() || "Anonymous", commentText.trim());
+    if (!commentText.trim() || !currentUser) return;
+    addComment(sticker.id, currentUser, commentText.trim());
     setCommentText("");
+  };
+
+  const handleEdit = (commentId: number, text: string) => {
+    setEditingId(commentId);
+    setEditText(text);
+  };
+
+  const submitEdit = (commentId: number) => {
+    if (editText.trim()) {
+      editComment(sticker.id, commentId, editText.trim());
+    }
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const handleLogin = () => {
+    if (loginInput.trim()) {
+      login(loginInput.trim());
+      setLoginInput("");
+      setShowLogin(false);
+    }
   };
 
   return (
@@ -102,7 +127,7 @@ const StickerModal = ({ sticker, onClose }: Props) => {
                 onClick={() => handleReaction(type)}
                 animate={clickedReaction === type ? { scale: [1, 1.3, 1] } : {}}
                 transition={{ duration: 0.3 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/60 hover:border-accent/50 hover:bg-accent/5 transition-all text-xs group"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/60 hover:border-accent/50 hover:bg-accent/5 transition-all text-xs group ${!currentUser ? "opacity-60" : ""}`}
               >
                 <Icon className={`w-3.5 h-3.5 transition-colors ${
                   type === "love" ? "group-hover:text-red-400" :
@@ -121,7 +146,7 @@ const StickerModal = ({ sticker, onClose }: Props) => {
               <p className="text-xs text-muted-foreground text-center py-4">No comments yet. Be the first! 💬</p>
             ) : (
               comments.map((c) => (
-                <div key={c.id} className="flex gap-2.5">
+                <div key={c.id} className="flex gap-2.5 group/comment">
                   <div className="w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-[10px] font-medium shrink-0 uppercase">
                     {c.author[0]}
                   </div>
@@ -129,41 +154,106 @@ const StickerModal = ({ sticker, onClose }: Props) => {
                     <div className="flex items-baseline gap-2">
                       <span className="text-xs font-medium">{c.author}</span>
                       <span className="text-[10px] text-muted-foreground">{c.date}</span>
+                      {/* Edit/Delete for own comments */}
+                      {currentUser && currentUser === c.author && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-100 transition-opacity ml-auto">
+                          <button
+                            onClick={() => handleEdit(c.id, c.text)}
+                            className="w-5 h-5 rounded-full hover:bg-muted flex items-center justify-center"
+                          >
+                            <Pencil className="w-2.5 h-2.5 text-muted-foreground" />
+                          </button>
+                          <button
+                            onClick={() => deleteComment(sticker.id, c.id)}
+                            className="w-5 h-5 rounded-full hover:bg-destructive/10 flex items-center justify-center"
+                          >
+                            <Trash2 className="w-2.5 h-2.5 text-destructive" />
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-foreground/80 mt-0.5 leading-relaxed">{c.text}</p>
+                    {editingId === c.id ? (
+                      <div className="flex gap-1.5 mt-1">
+                        <input
+                          type="text"
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && submitEdit(c.id)}
+                          className="flex-1 bg-muted/30 border border-border/60 rounded-lg px-2 py-1 text-xs outline-none focus:border-accent"
+                          autoFocus
+                        />
+                        <button onClick={() => submitEdit(c.id)} className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center">
+                          <Check className="w-3 h-3" />
+                        </button>
+                        <button onClick={() => setEditingId(null)} className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-foreground/80 mt-0.5 leading-relaxed">{c.text}</p>
+                    )}
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          {/* Comment input */}
-          <div className="p-3 border-t border-border/60 space-y-2">
-            <input
-              type="text"
-              value={authorName}
-              onChange={(e) => setAuthorName(e.target.value)}
-              placeholder="Your name (optional)"
-              className="w-full bg-muted/30 border border-border/60 rounded-xl px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-accent transition-colors"
-            />
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleComment()}
-                placeholder="Write a comment..."
-                className="flex-1 bg-muted/30 border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-accent transition-colors"
-              />
-              <button
-                onClick={handleComment}
-                disabled={!commentText.trim()}
-                className="bg-accent text-accent-foreground w-8 h-8 rounded-full flex items-center justify-center shadow-soft hover:shadow-elevated active:scale-90 transition-all disabled:opacity-40"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
+          {/* Login prompt or Comment input */}
+          {!currentUser ? (
+            <div className="p-3 border-t border-border/60">
+              {showLogin ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Enter your name to join the conversation</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={loginInput}
+                      onChange={(e) => setLoginInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                      placeholder="Your name..."
+                      className="flex-1 bg-muted/30 border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-accent transition-colors"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleLogin}
+                      disabled={!loginInput.trim()}
+                      className="bg-accent text-accent-foreground px-4 py-2 rounded-full text-xs font-medium shadow-soft disabled:opacity-40"
+                    >
+                      Join
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 text-xs text-muted-foreground hover:border-accent/50 hover:text-foreground transition-all"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  Log in to react & comment
+                </button>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="p-3 border-t border-border/60">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleComment()}
+                  placeholder={`Comment as ${currentUser}...`}
+                  className="flex-1 bg-muted/30 border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-accent transition-colors"
+                />
+                <button
+                  onClick={handleComment}
+                  disabled={!commentText.trim()}
+                  className="bg-accent text-accent-foreground w-8 h-8 rounded-full flex items-center justify-center shadow-soft hover:shadow-elevated active:scale-90 transition-all disabled:opacity-40"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
