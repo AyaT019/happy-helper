@@ -24,6 +24,20 @@ const StickerGrid = () => {
         <div className="flex-1 h-px bg-border" />
       </div>
 
+      {/* Search bar */}
+      <div className="px-5 pb-3">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search stickers..."
+            className="w-full bg-card border border-border rounded-full pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent transition-colors"
+          />
+        </div>
+      </div>
+
       {/* Filter pills */}
       <div className="flex gap-2 px-5 pb-[18px] overflow-x-auto scrollbar-hide">
         {cats.map((c) => (
