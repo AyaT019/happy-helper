@@ -6,12 +6,12 @@ const ADMIN_PASSWORD = "stickyy2026";
 
 const AdminPage = () => {
   const store = useAppStore();
-  const { db, addSticker, updateSticker, deleteSticker, addCategory, deleteCategory, markOrderDone, deleteOrder } = store;
+  const { db, addSticker, updateSticker, deleteSticker, addCategory, deleteCategory, markOrderDone, deleteOrder, deleteComment } = store;
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [pw, setPw] = useState("");
   const [pwError, setPwError] = useState(false);
-  const [tab, setTab] = useState<"stickers" | "orders" | "categories">("stickers");
+  const [tab, setTab] = useState<"stickers" | "orders" | "categories" | "comments">("stickers");
 
   // Sticker form
   const [editId, setEditId] = useState<number | null>(null);
@@ -115,7 +115,7 @@ const AdminPage = () => {
 
           {/* Tabs */}
           <div className="flex border border-border rounded-xl overflow-hidden mb-5">
-            {(["stickers", "orders", "categories"] as const).map((t) => (
+            {(["stickers", "orders", "categories", "comments"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -259,6 +259,39 @@ const AdminPage = () => {
                   );
                 })
               )}
+            </div>
+          )}
+
+          {/* Comments Tab */}
+          {tab === "comments" && (
+            <div>
+              {(() => {
+                const allComments = db.stickers.flatMap((s) =>
+                  (s.comments || []).map((c) => ({ ...c, stickerName: s.name, stickerId: s.id }))
+                );
+                if (!allComments.length) return <p className="text-muted-foreground text-[13px] py-4">No comments yet.</p>;
+                return allComments.map((c) => (
+                  <div key={c.id} className="flex items-start gap-2.5 bg-card rounded-xl px-3.5 py-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-muted/60 flex items-center justify-center text-[11px] font-medium shrink-0 uppercase mt-0.5">
+                      {c.author[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xs font-medium">{c.author}</span>
+                        <span className="text-[10px] text-muted-foreground">{c.date}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">on <span className="font-medium text-foreground">{c.stickerName}</span></div>
+                      <p className="text-xs text-foreground/80 mt-1 leading-relaxed">{c.text}</p>
+                    </div>
+                    <button
+                      onClick={() => { if (confirm("Delete this comment?")) deleteComment(c.stickerId, c.id); }}
+                      className="px-2 py-1 text-[10px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20 shrink-0"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ));
+              })()}
             </div>
           )}
         </div>

@@ -183,6 +183,16 @@ export function useStore() {
     }));
   }, []);
 
+  const deleteComment = useCallback((stickerId: number, commentId: number) => {
+    setDb((prev) => ({
+      ...prev,
+      stickers: prev.stickers.map((s) => {
+        if (s.id !== stickerId) return s;
+        return { ...s, comments: (s.comments || []).filter((c) => c.id !== commentId) };
+      }),
+    }));
+  }, []);
+
   return {
     db, cart, cartTotal, cartCount,
     addToCart, changeQty, removeFromCart,
@@ -190,6 +200,6 @@ export function useStore() {
     addSticker, updateSticker, deleteSticker,
     addCategory, deleteCategory,
     markOrderDone, deleteOrder,
-    addReaction, addComment,
+    addReaction, addComment, deleteComment,
   };
 }
