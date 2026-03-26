@@ -1,12 +1,17 @@
 import { useState } from "react";
+import { Search } from "lucide-react";
 import { useAppStore } from "@/store/StoreContext";
 
 const StickerGrid = () => {
   const { db, addToCart } = useAppStore();
   const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
 
   const cats = ["All", ...db.categories.filter((c) => c !== "All")];
-  const filtered = filter === "All" ? db.stickers : db.stickers.filter((s) => s.category === filter);
+  const byCategory = filter === "All" ? db.stickers : db.stickers.filter((s) => s.category === filter);
+  const filtered = search.trim()
+    ? byCategory.filter((s) => s.name.toLowerCase().includes(search.trim().toLowerCase()))
+    : byCategory;
 
   return (
     <div>
