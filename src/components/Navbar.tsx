@@ -20,7 +20,7 @@ const Navbar = ({ onCartOpen }: NavbarProps) => {
           to="/admin"
           className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] border border-border/60 rounded-full px-3 py-1.5 hover:bg-card hover:border-border transition-all duration-200"
         >
-          Admin
+          Login
         </Link>
         <button
           onClick={onCartOpen}
