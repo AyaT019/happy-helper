@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Heart, ThumbsUp, Laugh, MessageCircle } from "lucide-react";
 import { useAppStore } from "@/store/StoreContext";
+import { Sticker } from "@/store/useStore";
 import { motion, AnimatePresence } from "framer-motion";
+import StickerModal from "./StickerModal";
 
 const StickerGrid = () => {
   const { db, addToCart } = useAppStore();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
 
   const cats = ["All", ...db.categories.filter((c) => c !== "All")];
   const byCategory = filter === "All" ? db.stickers : db.stickers.filter((s) => s.category === filter);
@@ -14,8 +17,9 @@ const StickerGrid = () => {
     ? byCategory.filter((s) => s.name.toLowerCase().includes(search.trim().toLowerCase()))
     : byCategory;
 
-  const handleAdd = (id: number) => {
-    addToCart(id);
+  const totalReactions = (s: Sticker) => {
+    const r = s.reactions || { love: 0, haha: 0, like: 0 };
+    return r.love + r.haha + r.like;
   };
 
   return (
@@ -81,7 +85,7 @@ const StickerGrid = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: i * 0.04 }}
-                onClick={() => handleAdd(s.id)}
+                onClick={() => setSelectedSticker(s)}
                 className="group bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all duration-200 shadow-card hover:shadow-elevated relative"
               >
                 {s.badge && (
@@ -99,10 +103,25 @@ const StickerGrid = () => {
                 <div className="p-3 pb-3.5">
                   <div className="text-[13px] font-medium leading-tight">{s.name}</div>
                   <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{s.category}</div>
+
+                  {/* Mini reaction/comment stats */}
+                  <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
+                    {totalReactions(s) > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <Heart className="w-3 h-3" /> {totalReactions(s)}
+                      </span>
+                    )}
+                    {(s.comments?.length || 0) > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <MessageCircle className="w-3 h-3" /> {s.comments!.length}
+                      </span>
+                    )}
+                  </div>
+
                   <div className="flex items-center justify-between mt-1.5">
                     <div className="font-display text-[15px] text-accent">{s.price.toFixed(3)} TND</div>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleAdd(s.id); }}
+                      onClick={(e) => { e.stopPropagation(); addToCart(s.id); }}
                       className="bg-accent text-accent-foreground w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium shadow-soft hover:shadow-elevated active:scale-90 transition-all duration-150"
                     >
                       +
@@ -114,6 +133,14 @@ const StickerGrid = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Sticker detail modal */}
+      {selectedSticker && (
+        <StickerModal
+          sticker={db.stickers.find((s) => s.id === selectedSticker.id) || selectedSticker}
+          onClose={() => setSelectedSticker(null)}
+        />
+      )}
     </div>
   );
 };
