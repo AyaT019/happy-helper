@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { useAppStore } from "@/store/StoreContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 const StickerGrid = () => {
   const { db, addToCart } = useAppStore();
@@ -13,41 +14,45 @@ const StickerGrid = () => {
     ? byCategory.filter((s) => s.name.toLowerCase().includes(search.trim().toLowerCase()))
     : byCategory;
 
+  const handleAdd = (id: number) => {
+    addToCart(id);
+  };
+
   return (
     <div>
       {/* Section separator */}
-      <div className="flex items-center gap-2.5 px-5 pt-[22px] pb-3.5">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground whitespace-nowrap">
+      <div className="flex items-center gap-3 px-5 pt-6 pb-4">
+        <div className="flex-1 h-px bg-border/60" />
+        <span className="text-[10px] tracking-[0.18em] uppercase text-muted-foreground whitespace-nowrap font-medium">
           Browse collection
         </span>
-        <div className="flex-1 h-px bg-border" />
+        <div className="flex-1 h-px bg-border/60" />
       </div>
 
       {/* Search bar */}
       <div className="px-5 pb-3">
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative group">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search stickers..."
-            className="w-full bg-card border border-border rounded-full pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent transition-colors"
+            className="w-full bg-card border border-border/60 rounded-2xl pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none focus:border-accent focus:shadow-soft transition-all duration-200"
           />
         </div>
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-2 px-5 pb-[18px] overflow-x-auto scrollbar-hide">
+      <div className="flex gap-2 px-5 pb-5 overflow-x-auto scrollbar-hide">
         {cats.map((c) => (
           <button
             key={c}
             onClick={() => setFilter(c)}
-            className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs border transition-colors ${
+            className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs border transition-all duration-200 ${
               c === filter
-                ? "bg-primary border-primary text-primary-foreground"
-                : "bg-transparent border-border text-muted-foreground hover:border-foreground/30"
+                ? "bg-primary border-primary text-primary-foreground shadow-soft"
+                : "bg-transparent border-border/60 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
             }`}
           >
             {c}
@@ -57,43 +62,57 @@ const StickerGrid = () => {
 
       {/* Grid */}
       <div className="grid grid-cols-2 gap-3 px-5">
-        {!filtered.length ? (
-          <div className="col-span-2 text-center py-10 text-muted-foreground text-sm">
-            No stickers in this category yet.
-          </div>
-        ) : (
-          filtered.map((s) => (
-            <div
-              key={s.id}
-              onClick={() => addToCart(s.id)}
-              className="bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-transform relative"
+        <AnimatePresence mode="popLayout">
+          {!filtered.length ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="col-span-2 text-center py-14 text-muted-foreground"
             >
-              {s.badge && (
-                <div className="absolute top-2 left-2 bg-accent text-accent-foreground text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-lg z-10">
-                  {s.badge}
-                </div>
-              )}
-              <div className="h-[130px] flex items-center justify-center bg-muted overflow-hidden">
-                {s.img ? (
-                  <img src={s.img} alt={s.name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-[52px]">{s.emoji || "🌸"}</span>
-                )}
-              </div>
-              <div className="p-2.5 pb-3">
-                <div className="text-[13px] font-medium">{s.name}</div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.category}</div>
-                <div className="font-display text-[15px] text-accent mt-1">{s.price.toFixed(3)} TND</div>
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); addToCart(s.id); }}
-                className="absolute bottom-2.5 right-2.5 bg-accent text-accent-foreground w-7 h-7 rounded-full flex items-center justify-center text-base"
+              <span className="text-3xl block mb-2">🔍</span>
+              <p className="text-sm">No stickers found.</p>
+            </motion.div>
+          ) : (
+            filtered.map((s, i) => (
+              <motion.div
+                key={s.id}
+                layout
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, delay: i * 0.04 }}
+                onClick={() => handleAdd(s.id)}
+                className="group bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all duration-200 shadow-card hover:shadow-elevated relative"
               >
-                +
-              </button>
-            </div>
-          ))
-        )}
+                {s.badge && (
+                  <div className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[9px] tracking-[0.1em] uppercase px-2.5 py-0.5 rounded-full z-10 font-medium shadow-soft">
+                    {s.badge}
+                  </div>
+                )}
+                <div className="h-[140px] flex items-center justify-center bg-muted/50 overflow-hidden relative">
+                  {s.img ? (
+                    <img src={s.img} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <span className="text-[52px] group-hover:scale-110 transition-transform duration-300">{s.emoji || "🌸"}</span>
+                  )}
+                </div>
+                <div className="p-3 pb-3.5">
+                  <div className="text-[13px] font-medium leading-tight">{s.name}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{s.category}</div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <div className="font-display text-[15px] text-accent">{s.price.toFixed(3)} TND</div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleAdd(s.id); }}
+                      className="bg-accent text-accent-foreground w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium shadow-soft hover:shadow-elevated active:scale-90 transition-all duration-150"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
