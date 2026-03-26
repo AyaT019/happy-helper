@@ -1,5 +1,14 @@
 import { useState, useCallback, useEffect } from "react";
 
+export type ReactionType = "love" | "haha" | "like";
+
+export interface Comment {
+  id: number;
+  author: string;
+  text: string;
+  date: string;
+}
+
 export interface Sticker {
   id: number;
   name: string;
@@ -8,6 +17,8 @@ export interface Sticker {
   emoji: string;
   img: string;
   badge: string;
+  reactions?: Record<ReactionType, number>;
+  comments?: Comment[];
 }
 
 export interface CartItem extends Sticker {
@@ -147,6 +158,31 @@ export function useStore() {
     setDb((prev) => ({ ...prev, orders: prev.orders.filter((o) => o.id !== id) }));
   }, []);
 
+  const addReaction = useCallback((stickerId: number, type: ReactionType) => {
+    setDb((prev) => ({
+      ...prev,
+      stickers: prev.stickers.map((s) => {
+        if (s.id !== stickerId) return s;
+        const reactions = s.reactions || { love: 0, haha: 0, like: 0 };
+        return { ...s, reactions: { ...reactions, [type]: reactions[type] + 1 } };
+      }),
+    }));
+  }, []);
+
+  const addComment = useCallback((stickerId: number, author: string, text: string) => {
+    setDb((prev) => ({
+      ...prev,
+      stickers: prev.stickers.map((s) => {
+        if (s.id !== stickerId) return s;
+        const comments = s.comments || [];
+        return {
+          ...s,
+          comments: [...comments, { id: Date.now(), author, text, date: new Date().toLocaleDateString("en-GB") }],
+        };
+      }),
+    }));
+  }, []);
+
   return {
     db, cart, cartTotal, cartCount,
     addToCart, changeQty, removeFromCart,
@@ -154,5 +190,6 @@ export function useStore() {
     addSticker, updateSticker, deleteSticker,
     addCategory, deleteCategory,
     markOrderDone, deleteOrder,
+    addReaction, addComment,
   };
 }
