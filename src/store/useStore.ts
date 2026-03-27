@@ -25,6 +25,18 @@ export interface CartItem extends Sticker {
   qty: number;
 }
 
+export interface Pack {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  emoji: string;
+  img: string;
+  stickerIds: number[];
+  visible: boolean;
+  isHero: boolean;
+}
+
 export interface Order {
   id: number;
   name: string;
@@ -40,6 +52,7 @@ interface DB {
   stickers: Sticker[];
   categories: string[];
   orders: Order[];
+  packs: Pack[];
   nextId: number;
 }
 
@@ -56,7 +69,12 @@ const defaultDB: DB = {
   ],
   categories: ["All", "Dreamy", "Nature", "Cozy", "Aesthetic", "Dark"],
   orders: [],
-  nextId: 7,
+  packs: [
+    { id: 101, name: "Dreamy Starter Pack", description: "Begin your sticker journey with our most-loved dreamy designs.", price: 3.5, emoji: "✨", img: "", stickerIds: [1, 5], visible: true, isHero: true },
+    { id: 102, name: "Nature Pack", description: "Fresh greens and natural vibes.", price: 2.5, emoji: "🌿", img: "", stickerIds: [2], visible: true, isHero: false },
+    { id: 103, name: "Dark Mood Pack", description: "For the bold and moody aesthetic.", price: 3.0, emoji: "🦋", img: "", stickerIds: [6], visible: true, isHero: false },
+  ],
+  nextId: 200,
 };
 
 function loadData(): DB {
@@ -64,11 +82,12 @@ function loadData(): DB {
     const s = localStorage.getItem(STORAGE_KEY);
     if (s) {
       const parsed = JSON.parse(s);
-      if (!parsed.nextId) parsed.nextId = 100;
+      if (!parsed.nextId) parsed.nextId = 200;
+      if (!parsed.packs) parsed.packs = defaultDB.packs;
       return parsed;
     }
   } catch {}
-  return { ...defaultDB, stickers: [...defaultDB.stickers], categories: [...defaultDB.categories], orders: [] };
+  return { ...defaultDB, stickers: [...defaultDB.stickers], categories: [...defaultDB.categories], orders: [], packs: [...defaultDB.packs] };
 }
 
 const USER_KEY = "stickyy_user";
@@ -105,6 +124,14 @@ export function useStore() {
       return [...prev, { ...sticker, qty: 1 }];
     });
   }, [db.stickers]);
+
+  const addPackToCart = useCallback((packId: number) => {
+    const pack = db.packs.find((p) => p.id === packId);
+    if (!pack) return;
+    pack.stickerIds.forEach((sid) => {
+      addToCart(sid);
+    });
+  }, [db.packs, addToCart]);
 
   const changeQty = useCallback((id: number, delta: number) => {
     setCart((prev) => {
@@ -225,14 +252,35 @@ export function useStore() {
     }));
   }, []);
 
+  // Pack CRUD
+  const addPack = useCallback((pack: Omit<Pack, "id">) => {
+    setDb((prev) => ({
+      ...prev,
+      packs: [...prev.packs, { ...pack, id: prev.nextId }],
+      nextId: prev.nextId + 1,
+    }));
+  }, []);
+
+  const updatePack = useCallback((id: number, updates: Partial<Pack>) => {
+    setDb((prev) => ({
+      ...prev,
+      packs: prev.packs.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }));
+  }, []);
+
+  const deletePack = useCallback((id: number) => {
+    setDb((prev) => ({ ...prev, packs: prev.packs.filter((p) => p.id !== id) }));
+  }, []);
+
   return {
     db, cart, cartTotal, cartCount,
     currentUser, login, logout,
-    addToCart, changeQty, removeFromCart,
+    addToCart, addPackToCart, changeQty, removeFromCart,
     submitOrder,
     addSticker, updateSticker, deleteSticker,
     addCategory, deleteCategory,
     markOrderDone, deleteOrder,
     addReaction, addComment, deleteComment, editComment,
+    addPack, updatePack, deletePack,
   };
 }
