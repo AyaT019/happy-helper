@@ -7,12 +7,12 @@ const ADMIN_PASSWORD = "stickyy2026";
 
 const AdminPage = () => {
   const store = useAppStore();
-  const { db, addSticker, updateSticker, deleteSticker, addCategory, deleteCategory, markOrderDone, deleteOrder, deleteComment } = store;
+  const { db, addSticker, updateSticker, deleteSticker, addCategory, deleteCategory, markOrderDone, deleteOrder, deleteComment, addPack, updatePack, deletePack } = store;
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [pw, setPw] = useState("");
   const [pwError, setPwError] = useState(false);
-  const [tab, setTab] = useState<"stickers" | "orders" | "categories" | "comments">("stickers");
+  const [tab, setTab] = useState<"stickers" | "orders" | "categories" | "packs">("stickers");
 
   // Sticker form
   const [editId, setEditId] = useState<number | null>(null);
@@ -24,6 +24,18 @@ const AdminPage = () => {
   const excelRef = useRef<HTMLInputElement>(null);
   const [newCat, setNewCat] = useState("");
   const [importMessage, setImportMessage] = useState("");
+
+  // Pack form
+  const [packEditId, setPackEditId] = useState<number | null>(null);
+  const [pName, setPName] = useState("");
+  const [pDesc, setPDesc] = useState("");
+  const [pPrice, setPPrice] = useState("");
+  const [pEmoji, setPEmoji] = useState("");
+  const [pImg, setPImg] = useState("");
+  const [pStickerIds, setPStickerIds] = useState<number[]>([]);
+  const [pVisible, setPVisible] = useState(true);
+  const [pIsHero, setPIsHero] = useState(false);
+  const packFileRef = useRef<HTMLInputElement>(null);
 
   const tryLogin = () => {
     if (pw === ADMIN_PASSWORD) { setLoggedIn(true); setPwError(false); }
@@ -38,33 +50,30 @@ const AdminPage = () => {
     reader.readAsDataURL(file);
   };
 
+  const handlePackFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setPImg(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
-
-      if (!rows.length) {
-        setImportMessage("No rows found in Excel file.");
-        return;
-      }
-
+      if (!rows.length) { setImportMessage("No rows found."); return; }
       const getField = (row: Record<string, unknown>, keys: string[]) => {
         for (const key of keys) {
-          if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") {
-            return String(row[key]).trim();
-          }
+          if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") return String(row[key]).trim();
         }
         return "";
       };
-
-      let imported = 0;
-      let skipped = 0;
-
+      let imported = 0, skipped = 0;
       rows.forEach((row) => {
         const name = getField(row, ["name", "Name", "product", "Product"]);
         const priceText = getField(row, ["price", "Price"]);
@@ -73,19 +82,13 @@ const AdminPage = () => {
         const img = getField(row, ["img", "image", "imageUrl", "Image", "ImageUrl"]);
         const badge = getField(row, ["badge", "Badge"]);
         const price = Number(priceText);
-
-        if (!name || Number.isNaN(price)) {
-          skipped += 1;
-          return;
-        }
-
+        if (!name || Number.isNaN(price)) { skipped += 1; return; }
         addSticker({ name, price, category, emoji, img, badge });
         imported += 1;
       });
-
       setImportMessage(`Imported ${imported} product(s). Skipped ${skipped} invalid row(s).`);
     } catch {
-      setImportMessage("Failed to import file. Please upload a valid Excel file (.xlsx or .xls).");
+      setImportMessage("Failed to import file.");
     } finally {
       e.target.value = "";
     }
@@ -114,10 +117,40 @@ const AdminPage = () => {
     setEditId(id); setSName(s.name); setSPrice(String(s.price)); setSCat(s.category); setImgBase64(s.img || "");
   };
 
+  const resetPackForm = () => {
+    setPackEditId(null); setPName(""); setPDesc(""); setPPrice(""); setPEmoji(""); setPImg(""); setPStickerIds([]); setPVisible(true); setPIsHero(false);
+    if (packFileRef.current) packFileRef.current.value = "";
+  };
+
+  const handlePackSave = () => {
+    const name = pName.trim();
+    const price = parseFloat(pPrice);
+    if (!name || isNaN(price)) { alert("Please fill in name and price."); return; }
+    const data = { name, description: pDesc.trim(), price, emoji: pEmoji || "📦", img: pImg, stickerIds: pStickerIds, visible: pVisible, isHero: pIsHero };
+    if (packEditId !== null) {
+      updatePack(packEditId, data);
+    } else {
+      addPack(data);
+    }
+    resetPackForm();
+  };
+
+  const startPackEdit = (id: number) => {
+    const p = db.packs.find((x) => x.id === id);
+    if (!p) return;
+    setPackEditId(id); setPName(p.name); setPDesc(p.description); setPPrice(String(p.price)); setPEmoji(p.emoji); setPImg(p.img); setPStickerIds([...p.stickerIds]); setPVisible(p.visible); setPIsHero(p.isHero);
+  };
+
+  const togglePackSticker = (sid: number) => {
+    setPStickerIds((prev) => prev.includes(sid) ? prev.filter((id) => id !== sid) : [...prev, sid]);
+  };
+
   const totalOrders = db.orders.length;
   const pendingOrders = db.orders.filter((o) => o.status === "pending").length;
   const revenue = db.orders.filter((o) => o.status === "done").reduce((s, o) => s + o.total, 0);
   const cats = db.categories.filter((c) => c !== "All");
+
+  const inputCls = "w-full bg-background border border-border rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-colors";
 
   return (
     <div>
@@ -141,7 +174,7 @@ const AdminPage = () => {
             onChange={(e) => setPw(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && tryLogin()}
             placeholder="Password"
-            className="w-full bg-accent-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm text-center tracking-widest outline-none focus:border-accent mb-3"
+            className={`${inputCls} text-center tracking-widest mb-3`}
           />
           <button onClick={tryLogin} className="bg-primary text-primary-foreground w-full py-3.5 rounded-[14px] text-sm font-medium">
             Enter dashboard →
@@ -171,7 +204,7 @@ const AdminPage = () => {
 
           {/* Tabs */}
           <div className="flex border border-border rounded-xl overflow-hidden mb-5">
-            {(["stickers", "orders", "categories", "comments"] as const).map((t) => (
+            {(["stickers", "orders", "categories", "packs"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -190,27 +223,12 @@ const AdminPage = () => {
               <div className="bg-card rounded-2xl p-4 mb-4">
                 <h3 className="text-sm font-medium mb-3.5">{editId !== null ? "Edit sticker" : "Add new sticker"}</h3>
                 <div className="mb-3">
-                  <input
-                    ref={excelRef}
-                    type="file"
-                    accept=".xlsx,.xls"
-                    className="hidden"
-                    onChange={handleExcelImport}
-                  />
-                  <button
-                    onClick={() => excelRef.current?.click()}
-                    className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl text-sm font-medium"
-                  >
+                  <input ref={excelRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelImport} />
+                  <button onClick={() => excelRef.current?.click()} className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl text-sm font-medium">
                     Import products from Excel
                   </button>
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    Expected columns: name, price, category, emoji, img, badge.
-                  </p>
-                  <a
-                    href="/products-template.csv"
-                    download
-                    className="inline-block text-[11px] mt-1.5 text-primary underline underline-offset-2"
-                  >
+                  <p className="text-[11px] text-muted-foreground mt-2">Expected columns: name, price, category, emoji, img, badge.</p>
+                  <a href="/products-template.csv" download className="inline-block text-[11px] mt-1.5 text-primary underline underline-offset-2">
                     Download template (CSV)
                   </a>
                   {importMessage ? <p className="text-[11px] mt-1.5 text-accent">{importMessage}</p> : null}
@@ -222,10 +240,10 @@ const AdminPage = () => {
                   {imgBase64 ? <img src={imgBase64} className="w-full h-full object-cover rounded-lg" /> : <span className="text-xs text-muted-foreground">+ Add image</span>}
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                <input value={sName} onChange={(e) => setSName(e.target.value)} placeholder="Sticker name" className="w-full bg-accent-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm mb-2.5 outline-none focus:border-accent" />
+                <input value={sName} onChange={(e) => setSName(e.target.value)} placeholder="Sticker name" className={`${inputCls} mb-2.5`} />
                 <div className="grid grid-cols-2 gap-2.5 mb-2.5">
-                  <input value={sPrice} onChange={(e) => setSPrice(e.target.value)} type="number" placeholder="Price (TND)" step="0.1" min="0" className="w-full bg-accent-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-accent" />
-                  <select value={sCat} onChange={(e) => setSCat(e.target.value)} className="w-full bg-accent-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-accent">
+                  <input value={sPrice} onChange={(e) => setSPrice(e.target.value)} type="number" placeholder="Price (TND)" step="0.1" min="0" className={inputCls} />
+                  <select value={sCat} onChange={(e) => setSCat(e.target.value)} className={inputCls}>
                     <option value="">Category</option>
                     {cats.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -297,13 +315,9 @@ const AdminPage = () => {
                 <input
                   value={newCat}
                   onChange={(e) => setNewCat(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      if (newCat.trim()) { addCategory(newCat.trim()); setNewCat(""); }
-                    }
-                  }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && newCat.trim()) { addCategory(newCat.trim()); setNewCat(""); } }}
                   placeholder="e.g. Vintage, Cute, Campus..."
-                  className="w-full bg-accent-foreground border border-border rounded-lg px-3.5 py-2.5 text-sm mb-2.5 outline-none focus:border-accent"
+                  className={`${inputCls} mb-2.5`}
                 />
                 <button onClick={() => { if (newCat.trim()) { addCategory(newCat.trim()); setNewCat(""); } }} className="bg-accent text-accent-foreground w-full py-3 rounded-xl text-[13px] font-medium">
                   + Create category
@@ -344,36 +358,90 @@ const AdminPage = () => {
             </div>
           )}
 
-          {/* Comments Tab */}
-          {tab === "comments" && (
+          {/* Packs Tab */}
+          {tab === "packs" && (
             <div>
-              {(() => {
-                const allComments = db.stickers.flatMap((s) =>
-                  (s.comments || []).map((c) => ({ ...c, stickerName: s.name, stickerId: s.id }))
-                );
-                if (!allComments.length) return <p className="text-muted-foreground text-[13px] py-4">No comments yet.</p>;
-                return allComments.map((c) => (
-                  <div key={c.id} className="flex items-start gap-2.5 bg-card rounded-xl px-3.5 py-3 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-muted/60 flex items-center justify-center text-[11px] font-medium shrink-0 uppercase mt-0.5">
-                      {c.author[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-medium">{c.author}</span>
-                        <span className="text-[10px] text-muted-foreground">{c.date}</span>
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">on <span className="font-medium text-foreground">{c.stickerName}</span></div>
-                      <p className="text-xs text-foreground/80 mt-1 leading-relaxed">{c.text}</p>
-                    </div>
-                    <button
-                      onClick={() => { if (confirm("Delete this comment?")) deleteComment(c.stickerId, c.id); }}
-                      className="px-2 py-1 text-[10px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20 shrink-0"
-                    >
-                      Delete
-                    </button>
+              <div className="bg-card rounded-2xl p-4 mb-4">
+                <h3 className="text-sm font-medium mb-3.5">{packEditId !== null ? "Edit pack" : "Add new pack"}</h3>
+
+                <div
+                  onClick={() => packFileRef.current?.click()}
+                  className="w-full h-[100px] bg-muted rounded-lg flex items-center justify-center text-[40px] mb-2.5 overflow-hidden cursor-pointer border border-dashed border-border"
+                >
+                  {pImg ? <img src={pImg} className="w-full h-full object-cover rounded-lg" /> : <span className="text-xs text-muted-foreground">+ Add image</span>}
+                </div>
+                <input ref={packFileRef} type="file" accept="image/*" className="hidden" onChange={handlePackFileChange} />
+
+                <input value={pName} onChange={(e) => setPName(e.target.value)} placeholder="Pack name" className={`${inputCls} mb-2.5`} />
+                <textarea value={pDesc} onChange={(e) => setPDesc(e.target.value)} placeholder="Description" rows={2} className={`${inputCls} mb-2.5 resize-none`} />
+                <div className="grid grid-cols-2 gap-2.5 mb-2.5">
+                  <input value={pPrice} onChange={(e) => setPPrice(e.target.value)} type="number" placeholder="Price (TND)" step="0.1" min="0" className={inputCls} />
+                  <input value={pEmoji} onChange={(e) => setPEmoji(e.target.value)} placeholder="Emoji icon" className={inputCls} />
+                </div>
+
+                {/* Sticker selection */}
+                <div className="mb-3">
+                  <div className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Select stickers</div>
+                  <div className="max-h-[150px] overflow-y-auto space-y-1.5 border border-border rounded-lg p-2">
+                    {db.stickers.map((s) => (
+                      <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs">
+                        <input
+                          type="checkbox"
+                          checked={pStickerIds.includes(s.id)}
+                          onChange={() => togglePackSticker(s.id)}
+                          className="rounded accent-accent"
+                        />
+                        <span>{s.emoji} {s.name}</span>
+                      </label>
+                    ))}
                   </div>
-                ));
-              })()}
+                </div>
+
+                {/* Toggles */}
+                <div className="flex items-center gap-4 mb-3">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input type="checkbox" checked={pVisible} onChange={(e) => setPVisible(e.target.checked)} className="rounded accent-accent" />
+                    Visible on shop
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input type="checkbox" checked={pIsHero} onChange={(e) => setPIsHero(e.target.checked)} className="rounded accent-accent" />
+                    Show as hero pack
+                  </label>
+                </div>
+
+                <div className="flex gap-2">
+                  <button onClick={handlePackSave} className="flex-1 bg-accent text-accent-foreground py-2.5 rounded-xl text-sm font-medium">Save pack</button>
+                  <button onClick={resetPackForm} className="bg-transparent border border-border text-foreground px-4 py-2.5 rounded-xl text-[13px]">Cancel</button>
+                </div>
+              </div>
+
+              {/* Pack list */}
+              {db.packs.map((p) => (
+                <div key={p.id} className="flex items-center gap-2.5 py-2.5 border-b border-border">
+                  <div className="w-11 h-11 rounded-lg bg-muted flex items-center justify-center text-[22px] overflow-hidden shrink-0">
+                    {p.img ? <img src={p.img} alt={p.name} className="w-full h-full object-cover" /> : p.emoji || "📦"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium flex items-center gap-1.5">
+                      {p.name}
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider ${p.isHero ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"}`}>
+                        {p.isHero ? "hero" : "mini"}
+                      </span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider ${p.visible ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
+                        {p.visible ? "live" : "hidden"}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">{p.stickerIds.length} sticker{p.stickerIds.length !== 1 ? "s" : ""} · {p.price.toFixed(3)} TND</div>
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    <button onClick={() => startPackEdit(p.id)} className="px-2.5 py-1 text-[11px] rounded-lg bg-muted text-foreground border border-border">Edit</button>
+                    <button onClick={() => updatePack(p.id, { visible: !p.visible })} className="px-2 py-1 text-[11px] rounded-lg bg-muted text-foreground border border-border">
+                      {p.visible ? "Hide" : "Show"}
+                    </button>
+                    <button onClick={() => { if (confirm("Delete this pack?")) deletePack(p.id); }} className="px-2.5 py-1 text-[11px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">Del</button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
