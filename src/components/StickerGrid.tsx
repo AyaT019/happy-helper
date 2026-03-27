@@ -64,36 +64,37 @@ const StickerGrid = () => {
         ))}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-2 gap-3 px-5">
-        <AnimatePresence mode="popLayout">
-          {!filtered.length ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="col-span-2 text-center py-14 text-muted-foreground"
-            >
-              <span className="text-3xl block mb-2">🔍</span>
-              <p className="text-sm">No stickers found.</p>
-            </motion.div>
-          ) : (
-            filtered.map((s, i) => (
+      {/* Masonry Grid */}
+      <div className="px-5">
+        {!filtered.length ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-14 text-muted-foreground"
+          >
+            <span className="text-3xl block mb-2">🔍</span>
+            <p className="text-sm">No stickers found.</p>
+          </motion.div>
+        ) : (
+          <div className="columns-2 gap-3 space-y-3">
+            {filtered.map((s, i) => (
               <motion.div
                 key={s.id}
-                layout
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: i * 0.04 }}
                 onClick={() => setSelectedSticker(s)}
-                className="group bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all duration-200 shadow-card hover:shadow-elevated relative"
+                className="group break-inside-avoid bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all duration-200 shadow-card hover:shadow-elevated relative"
               >
                 {s.badge && (
                   <div className="absolute top-2.5 left-2.5 bg-accent text-accent-foreground text-[9px] tracking-[0.1em] uppercase px-2.5 py-0.5 rounded-full z-10 font-medium shadow-soft">
                     {s.badge}
                   </div>
                 )}
-                <div className="h-[140px] flex items-center justify-center bg-muted/50 overflow-hidden relative">
+                <div
+                  className="flex items-center justify-center bg-muted/50 overflow-hidden relative"
+                  style={{ minHeight: `${120 + (i % 3) * 40}px` }}
+                >
                   {s.img ? (
                     <img src={s.img} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
@@ -104,7 +105,6 @@ const StickerGrid = () => {
                   <div className="text-[13px] font-medium leading-tight">{s.name}</div>
                   <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{s.category}</div>
 
-                  {/* Mini reaction/comment stats */}
                   <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
                     {totalReactions(s) > 0 && (
                       <span className="flex items-center gap-0.5">
@@ -129,9 +129,9 @@ const StickerGrid = () => {
                   </div>
                 </div>
               </motion.div>
-            ))
-          )}
-        </AnimatePresence>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Sticker detail modal */}
