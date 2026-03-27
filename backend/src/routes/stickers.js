@@ -60,9 +60,12 @@ router.post("/:id/reactions", async (req, res, next) => {
     }
     const sticker = await Sticker.findById(req.params.id);
     if (!sticker) return res.status(404).json({ error: "Sticker not found" });
-    const reactions = sticker.reactions || { love: 0, haha: 0, like: 0 };
+    const reactions = sticker.reactions
+      ? { love: sticker.reactions.love, haha: sticker.reactions.haha, like: sticker.reactions.like }
+      : { love: 0, haha: 0, like: 0 };
     reactions[type] = (reactions[type] || 0) + 1;
     sticker.reactions = reactions;
+    sticker.markModified("reactions");
     await sticker.save();
     res.json(sticker);
   } catch (err) {

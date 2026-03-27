@@ -84,6 +84,8 @@ function loadData(): DB {
       const parsed = JSON.parse(s);
       if (!parsed.nextId) parsed.nextId = 200;
       if (!parsed.packs) parsed.packs = defaultDB.packs;
+      // Migrate older packs that may be missing the isHero field
+      parsed.packs = parsed.packs.map((p: Pack) => ({ isHero: false, ...p }));
       return parsed;
     }
   } catch {}
@@ -127,11 +129,22 @@ export function useStore() {
 
   const addPackToCart = useCallback((packId: number) => {
     const pack = db.packs.find((p) => p.id === packId);
-    if (!pack) return;
-    pack.stickerIds.forEach((sid) => {
-      addToCart(sid);
+    if (!pack || !pack.stickerIds.length) return;
+    setCart((prev) => {
+      let cart = [...prev];
+      for (const sid of pack.stickerIds) {
+        const sticker = db.stickers.find((s) => s.id === sid);
+        if (!sticker) continue;
+        const existing = cart.find((c) => c.id === sid);
+        if (existing) {
+          cart = cart.map((c) => (c.id === sid ? { ...c, qty: c.qty + 1 } : c));
+        } else {
+          cart = [...cart, { ...sticker, qty: 1 }];
+        }
+      }
+      return cart;
     });
-  }, [db.packs, addToCart]);
+  }, [db.packs, db.stickers]);
 
   const changeQty = useCallback((id: number, delta: number) => {
     setCart((prev) => {

@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Search, Heart, ThumbsUp, Laugh, MessageCircle } from "lucide-react";
+import { Search, Heart, MessageCircle } from "lucide-react";
 import { useAppStore } from "@/store/StoreContext";
 import { Sticker } from "@/store/useStore";
 import { motion, AnimatePresence } from "framer-motion";
 import StickerModal from "./StickerModal";
+
+const EMOJI_HEIGHTS = [120, 160, 140, 180, 130, 150, 170, 145];
 
 const StickerGrid = () => {
   const { db, addToCart } = useAppStore();
@@ -93,7 +95,7 @@ const StickerGrid = () => {
                 )}
                 <div
                   className="flex items-center justify-center bg-muted/50 overflow-hidden relative"
-                  style={{ minHeight: `${120 + (i % 3) * 40}px` }}
+                  style={s.img ? undefined : { height: `${EMOJI_HEIGHTS[i % EMOJI_HEIGHTS.length]}px` }}
                 >
                   {s.img ? (
                     <img src={s.img} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

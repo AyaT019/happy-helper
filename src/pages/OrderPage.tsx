@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAppStore } from "@/store/StoreContext";
 import { Phone, ArrowLeft } from "lucide-react";
@@ -22,10 +22,11 @@ const OrderPage = () => {
     navigate("/success");
   };
 
-  if (!cart.length) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!cart.length) navigate("/");
+  }, [cart.length, navigate]);
+
+  if (!cart.length) return null;
 
   return (
     <div>
