@@ -14,11 +14,11 @@ async function run() {
       const salt = await bcrypt.genSalt(10);
       const hashed = await bcrypt.hash(password, salt);
       await User.create({ name: "Eya", phone, password: hashed, role: "admin" });
-      console.log("Admin Eya created");
+      console.log("Admin created");
     } else {
-      existing.name = "Eya";
       const salt = await bcrypt.genSalt(10);
       existing.password = await bcrypt.hash(password, salt);
+      existing.name = "Eya";
       existing.role = "admin";
       await existing.save();
       console.log("Admin updated");

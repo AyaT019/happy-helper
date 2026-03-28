@@ -24,10 +24,18 @@ const OrderPage = () => {
     }
     setError(false);
     
-    // 1. Submit order to backend securely
+    // Register the order in the backend database
     submitOrder(name.trim(), finalPhone, notes.trim());
 
-    // 2. Head to success
+    // Construct the WhatsApp message payload
+    const message = `Hi Eya! ✨ I just placed a new order!\n\n*Name:* ${name.trim()}\n*Phone:* ${finalPhone}\n*Items:* ${cart.map(c => `${c.qty}x ${c.name}`).join(', ')}\n*Total:* ${cartTotal.toFixed(3)} TND\n*Notes:* ${notes.trim() || 'None'}`;
+    
+    const whatsappUrl = `https://api.whatsapp.com/send/?phone=21654999568&text=${encodeURIComponent(message)}`;
+    
+    // Launch WhatsApp link into a new tab (or deep-link into app)
+    window.open(whatsappUrl, '_blank');
+    
+    // Route current tab to success!
     navigate("/success");
   };
 
