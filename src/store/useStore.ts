@@ -35,6 +35,8 @@ export interface Pack {
   stickerIds: number[];
   visible: boolean;
   isHero: boolean;
+  reactions?: Record<ReactionType, number>;
+  comments?: Comment[];
 }
 
 export interface Order {
