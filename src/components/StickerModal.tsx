@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppStore } from "@/store/StoreContext";
 import { Sticker, ReactionType } from "@/store/useStore";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,19 +17,18 @@ interface Props {
 }
 
 const StickerModal = ({ sticker, onClose }: Props) => {
-  const { addReaction, addComment, addToCart, deleteComment, editComment, currentUser, login } = useAppStore();
+  const { addReaction, addComment, addToCart, deleteComment, editComment, currentUser } = useAppStore();
+  const navigate = useNavigate();
   const [commentText, setCommentText] = useState("");
   const [clickedReaction, setClickedReaction] = useState<ReactionType | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
-  const [loginInput, setLoginInput] = useState("");
-  const [showLogin, setShowLogin] = useState(false);
 
   const reactions = sticker.reactions || { love: 0, haha: 0, like: 0 };
   const comments = sticker.comments || [];
 
   const handleReaction = (type: ReactionType) => {
-    if (!currentUser) { setShowLogin(true); return; }
+    if (!currentUser) { onClose(); navigate("/admin"); return; }
     addReaction(sticker.id, type);
     setClickedReaction(type);
     setTimeout(() => setClickedReaction(null), 400);
@@ -36,29 +36,21 @@ const StickerModal = ({ sticker, onClose }: Props) => {
 
   const handleComment = () => {
     if (!commentText.trim() || !currentUser) return;
-    addComment(sticker.id, currentUser, commentText.trim());
+    addComment(sticker.id, currentUser.name, commentText.trim());
     setCommentText("");
   };
 
-  const handleEdit = (commentId: number, text: string) => {
+  const handleEdit = (commentId: string, text: string) => {
     setEditingId(commentId);
     setEditText(text);
   };
 
-  const submitEdit = (commentId: number) => {
+  const submitEdit = (commentId: string) => {
     if (editText.trim()) {
       editComment(sticker.id, commentId, editText.trim());
     }
     setEditingId(null);
     setEditText("");
-  };
-
-  const handleLogin = () => {
-    if (loginInput.trim()) {
-      login(loginInput.trim());
-      setLoginInput("");
-      setShowLogin(false);
-    }
   };
 
   return (
@@ -155,7 +147,7 @@ const StickerModal = ({ sticker, onClose }: Props) => {
                       <span className="text-xs font-medium">{c.author}</span>
                       <span className="text-[10px] text-muted-foreground">{c.date}</span>
                       {/* Edit/Delete for own comments */}
-                      {currentUser && currentUser === c.author && (
+                      {currentUser && currentUser.name === c.author && (
                         <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-100 transition-opacity ml-auto">
                           <button
                             onClick={() => handleEdit(c.id, c.text)}
@@ -201,37 +193,13 @@ const StickerModal = ({ sticker, onClose }: Props) => {
           {/* Login prompt or Comment input */}
           {!currentUser ? (
             <div className="p-3 border-t border-border/60">
-              {showLogin ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Enter your name to join the conversation</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={loginInput}
-                      onChange={(e) => setLoginInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                      placeholder="Your name..."
-                      className="flex-1 bg-muted/30 border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-accent transition-colors"
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleLogin}
-                      disabled={!loginInput.trim()}
-                      className="bg-accent text-accent-foreground px-4 py-2 rounded-full text-xs font-medium shadow-soft disabled:opacity-40"
-                    >
-                      Join
-                    </button>
-                  </div>
-                </div>
-              ) : (
                 <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => { onClose(); navigate("/admin"); }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 text-xs text-muted-foreground hover:border-accent/50 hover:text-foreground transition-all"
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  Log in to react & comment
+                  Log in to join the conversation
                 </button>
-              )}
             </div>
           ) : (
             <div className="p-3 border-t border-border/60">
@@ -241,7 +209,7 @@ const StickerModal = ({ sticker, onClose }: Props) => {
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleComment()}
-                  placeholder={`Comment as ${currentUser}...`}
+                  placeholder={`Comment as ${currentUser.name}...`}
                   className="flex-1 bg-muted/30 border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-accent transition-colors"
                 />
                 <button

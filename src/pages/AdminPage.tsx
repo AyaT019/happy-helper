@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "@/store/StoreContext";
 import * as XLSX from "xlsx";
 
@@ -7,15 +7,40 @@ const ADMIN_PASSWORD = "stickyy2026";
 
 const AdminPage = () => {
   const store = useAppStore();
-  const { db, addSticker, updateSticker, deleteSticker, addCategory, deleteCategory, markOrderDone, deleteOrder, deleteComment, addPack, updatePack, deletePack } = store;
+  const { db, currentUser, loginReq, registerReq, uploadImage, addSticker, updateSticker, deleteSticker, addCategory, deleteCategory, markOrderDone, deleteOrder, addPack, updatePack, deletePack } = store;
+  const navigate = useNavigate();
 
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [phone, setPhone] = useState("");
   const [pw, setPw] = useState("");
-  const [pwError, setPwError] = useState(false);
+  const [name, setName] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
+  const [authError, setAuthError] = useState("");
+  
+  const loggedIn = currentUser?.role === "admin";
+
+  useEffect(() => {
+    if (currentUser && currentUser.role !== "admin") {
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
+
+  const tryAuth = async () => {
+    setAuthError("");
+    if (isRegister) {
+      if (!name || typeof phone !== "string" || !pw) { setAuthError("All fields required"); return; }
+      const ok = await registerReq(phone, pw, name);
+      if (!ok) setAuthError("Registration failed. Phone may be in use.");
+    } else {
+      if (typeof phone !== "string" || !pw) { setAuthError("Phone and password required"); return; }
+      const ok = await loginReq(phone, pw);
+      if (!ok) setAuthError("Invalid credentials.");
+    }
+  };
+
   const [tab, setTab] = useState<"stickers" | "orders" | "categories" | "packs">("stickers");
 
   // Sticker form
-  const [editId, setEditId] = useState<number | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [sName, setSName] = useState("");
   const [sPrice, setSPrice] = useState("");
   const [sCat, setSCat] = useState("");
@@ -26,36 +51,37 @@ const AdminPage = () => {
   const [importMessage, setImportMessage] = useState("");
 
   // Pack form
-  const [packEditId, setPackEditId] = useState<number | null>(null);
+  const [packEditId, setPackEditId] = useState<string | null>(null);
   const [pName, setPName] = useState("");
   const [pDesc, setPDesc] = useState("");
   const [pPrice, setPPrice] = useState("");
   const [pEmoji, setPEmoji] = useState("");
   const [pImg, setPImg] = useState("");
-  const [pStickerIds, setPStickerIds] = useState<number[]>([]);
+  const [pStickerIds, setPStickerIds] = useState<string[]>([]);
   const [pVisible, setPVisible] = useState(true);
   const [pIsHero, setPIsHero] = useState(false);
   const packFileRef = useRef<HTMLInputElement>(null);
 
-  const tryLogin = () => {
-    if (pw === ADMIN_PASSWORD) { setLoggedIn(true); setPwError(false); }
-    else setPwError(true);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setImgBase64(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    const url = await uploadImage(file);
+    if (url) {
+      setImgBase64(url);
+    } else {
+      alert("Image upload failed. Ensure you are logged in as admin and Cloudinary is configured.");
+    }
   };
 
-  const handlePackFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePackFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setPImg(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    const url = await uploadImage(file);
+    if (url) {
+      setPImg(url);
+    } else {
+      alert("Image upload failed.");
+    }
   };
 
   const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,7 +137,7 @@ const AdminPage = () => {
     resetForm();
   };
 
-  const startEdit = (id: number) => {
+  const startEdit = (id: string) => {
     const s = db.stickers.find((x) => x.id === id);
     if (!s) return;
     setEditId(id); setSName(s.name); setSPrice(String(s.price)); setSCat(s.category); setImgBase64(s.img || "");
@@ -135,13 +161,13 @@ const AdminPage = () => {
     resetPackForm();
   };
 
-  const startPackEdit = (id: number) => {
+  const startPackEdit = (id: string) => {
     const p = db.packs.find((x) => x.id === id);
     if (!p) return;
     setPackEditId(id); setPName(p.name); setPDesc(p.description); setPPrice(String(p.price)); setPEmoji(p.emoji); setPImg(p.img); setPStickerIds([...p.stickerIds]); setPVisible(p.visible); setPIsHero(p.isHero);
   };
 
-  const togglePackSticker = (sid: number) => {
+  const togglePackSticker = (sid: string) => {
     setPStickerIds((prev) => prev.includes(sid) ? prev.filter((id) => id !== sid) : [...prev, sid]);
   };
 
@@ -158,28 +184,44 @@ const AdminPage = () => {
         <Link to="/" className="text-xl text-foreground">←</Link>
         <span className="font-display text-[22px]">Admin</span>
         {loggedIn ? (
-          <button onClick={() => { setLoggedIn(false); setPw(""); }} className="border border-border text-muted-foreground px-3 py-1.5 rounded-full text-[11px]">
+          <button onClick={() => { store.logout(); }} className="border border-border text-muted-foreground px-3 py-1.5 rounded-full text-[11px]">
             Logout
           </button>
         ) : <div className="w-[60px]" />}
       </nav>
 
       {!loggedIn ? (
-        <div className="max-w-[340px] mx-auto mt-16 text-center px-5">
-          <h2 className="font-display text-[30px] mb-1.5">Welcome back</h2>
-          <p className="text-muted-foreground text-[13px] mb-7">Enter your admin password to continue</p>
+        <div className="max-w-[340px] mx-auto mt-16 px-5">
+          <div className="text-center mb-7">
+            <h2 className="font-display text-[30px] mb-1.5">Welcome</h2>
+            <p className="text-muted-foreground text-[13px]">{isRegister ? "Create an account" : "Log in to your account"}</p>
+          </div>
+          {isRegister && (
+            <input
+              value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="Your Name" className={`${inputCls} mb-3`}
+            />
+          )}
           <input
-            type="password"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && tryLogin()}
-            placeholder="Password"
-            className={`${inputCls} text-center tracking-widest mb-3`}
+            type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone Number" className={`${inputCls} mb-3`}
           />
-          <button onClick={tryLogin} className="bg-primary text-primary-foreground w-full py-3.5 rounded-[14px] text-sm font-medium">
-            Enter dashboard →
+          <input
+            type="password" value={pw} onChange={(e) => setPw(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && tryAuth()}
+            placeholder="Password" className={`${inputCls} mb-4`}
+          />
+          <button onClick={tryAuth} className="bg-primary text-primary-foreground w-full py-3.5 rounded-[14px] text-sm font-medium">
+            {isRegister ? "Sign Up" : "Sign In"} →
           </button>
-          {pwError && <p className="text-destructive text-xs mt-2">Incorrect password. Try again.</p>}
+          
+          <button 
+            onClick={() => setIsRegister(!isRegister)} 
+            className="w-full text-center text-xs text-muted-foreground mt-4 hover:text-foreground underline underline-offset-2"
+          >
+            {isRegister ? "Already have an account? Log in" : "Need an account? Sign up"}
+          </button>
+          {authError && <p className="text-destructive text-xs text-center mt-3">{authError}</p>}
         </div>
       ) : (
         <div className="px-5 pb-8">
@@ -208,9 +250,8 @@ const AdminPage = () => {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`flex-1 py-2.5 text-xs font-medium tracking-wider capitalize ${
-                  tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-                }`}
+                className={`flex-1 py-2.5 text-xs font-medium tracking-wider capitalize ${tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  }`}
               >
                 {t}
               </button>
@@ -286,9 +327,8 @@ const AdminPage = () => {
                         <div className="text-sm font-medium">{o.name}</div>
                         <div className="text-xs text-muted-foreground">📞 {o.phone}</div>
                       </div>
-                      <span className={`text-[10px] px-2.5 py-0.5 rounded-lg font-medium uppercase tracking-wider ${
-                        o.status === "done" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                      }`}>
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-lg font-medium uppercase tracking-wider ${o.status === "done" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                        }`}>
                         {o.status}
                       </span>
                     </div>

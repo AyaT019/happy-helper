@@ -5,20 +5,29 @@ import { Phone, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 const OrderPage = () => {
-  const { cart, cartTotal, submitOrder } = useAppStore();
+  const { cart, cartTotal, submitOrder, currentUser } = useAppStore();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  
+  // Prefill if logged in
+  const [name, setName] = useState(currentUser?.name || "");
+  const [phone, setPhone] = useState(currentUser?.phone || "");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState(false);
 
   const handleSubmit = () => {
-    if (!name.trim() || !phone.trim()) {
+    let finalPhone = phone.trim();
+    if (currentUser?.role === "admin") finalPhone = "Admin bypassing phone";
+
+    if (!name.trim() || !finalPhone) {
       setError(true);
       return;
     }
     setError(false);
-    submitOrder(name.trim(), phone.trim(), notes.trim());
+    
+    // 1. Submit order to backend securely
+    submitOrder(name.trim(), finalPhone, notes.trim());
+
+    // 2. Head to success
     navigate("/success");
   };
 
@@ -64,13 +73,19 @@ const OrderPage = () => {
         {/* Name */}
         <div className="mb-4">
           <label className="block text-[11px] text-muted-foreground uppercase tracking-[0.12em] mb-2 font-medium">Your name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Yasmine"
-            className="w-full bg-card border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground outline-none focus:border-accent focus:shadow-soft transition-all duration-200"
-          />
+          {currentUser ? (
+            <div className="w-full bg-card/50 border border-border/40 rounded-xl px-4 py-3 text-sm text-foreground/80 select-none">
+              {currentUser.name}
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Yasmine"
+              className="w-full bg-card border border-border/60 rounded-xl px-4 py-3 text-sm text-foreground outline-none focus:border-accent focus:shadow-soft transition-all duration-200"
+            />
+          )}
         </div>
 
         {/* Phone */}
@@ -81,13 +96,19 @@ const OrderPage = () => {
             </div>
             <span className="text-[11px] text-accent font-medium uppercase tracking-[0.12em]">Phone number</span>
           </div>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+216 XX XXX XXX"
-            className="w-full bg-background border border-border/60 rounded-xl px-4 py-3 text-base font-medium text-foreground outline-none focus:border-accent focus:shadow-soft transition-all duration-200"
-          />
+          {currentUser ? (
+            <div className="w-full bg-background/50 border border-border/40 rounded-xl px-4 py-3 text-base font-medium text-foreground/80 select-none">
+              {currentUser.phone || "Administrator"}
+            </div>
+          ) : (
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+216 XX XXX XXX"
+              className="w-full bg-background border border-border/60 rounded-xl px-4 py-3 text-base font-medium text-foreground outline-none focus:border-accent focus:shadow-soft transition-all duration-200"
+            />
+          )}
           <p className="text-[11px] text-muted-foreground mt-2.5 leading-relaxed">
             We'll send you a confirmation message to arrange campus delivery.
           </p>

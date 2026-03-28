@@ -1,6 +1,6 @@
 import express from "express";
 import { Sticker } from "../models/Sticker.js";
-import { requireAdmin } from "../middleware/adminAuth.js";
+import { requireAdmin, requireAuth } from "../middleware/auth.middleware.js";
 
 export const router = express.Router();
 
@@ -52,7 +52,7 @@ router.delete("/:id", requireAdmin, async (req, res, next) => {
 });
 
 // Add reaction
-router.post("/:id/reactions", async (req, res, next) => {
+router.post("/:id/reactions", requireAuth, async (req, res, next) => {
   try {
     const { type } = req.body;
     if (!["love", "haha", "like"].includes(type)) {
@@ -74,7 +74,7 @@ router.post("/:id/reactions", async (req, res, next) => {
 });
 
 // Add comment
-router.post("/:id/comments", async (req, res, next) => {
+router.post("/:id/comments", requireAuth, async (req, res, next) => {
   try {
     const { author, text } = req.body;
     if (!author || !text) {

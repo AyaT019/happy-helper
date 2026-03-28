@@ -3,14 +3,14 @@ import { useState, useCallback, useEffect } from "react";
 export type ReactionType = "love" | "haha" | "like";
 
 export interface Comment {
-  id: number;
+  id: string; // Mapping _id to id
   author: string;
   text: string;
   date: string;
 }
 
 export interface Sticker {
-  id: number;
+  id: string;
   name: string;
   price: number;
   category: string;
@@ -26,13 +26,13 @@ export interface CartItem extends Sticker {
 }
 
 export interface Pack {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;
   emoji: string;
   img: string;
-  stickerIds: number[];
+  stickerIds: string[];
   visible: boolean;
   isHero: boolean;
   reactions?: Record<ReactionType, number>;
@@ -40,7 +40,7 @@ export interface Pack {
 }
 
 export interface Order {
-  id: number;
+  id: string;
   name: string;
   phone: string;
   notes: string;
@@ -50,76 +50,137 @@ export interface Order {
   date: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  phone: string;
+  role: "admin" | "user";
+}
+
 interface DB {
   stickers: Sticker[];
   categories: string[];
   orders: Order[];
   packs: Pack[];
-  nextId: number;
 }
-
-const STORAGE_KEY = "stickyy_data";
 
 const defaultDB: DB = {
-  stickers: [
-    { id: 1, name: "Lunar Glow", price: 1.5, category: "Dreamy", emoji: "🌙", img: "", badge: "New" },
-    { id: 2, name: "Soft Fern", price: 1.2, category: "Nature", emoji: "🌿", img: "", badge: "" },
-    { id: 3, name: "Late Latte", price: 1.2, category: "Cozy", emoji: "☕", img: "", badge: "Hot" },
-    { id: 4, name: "Film Reel", price: 2.0, category: "Aesthetic", emoji: "🎞", img: "", badge: "" },
-    { id: 5, name: "Moonflower", price: 1.5, category: "Dreamy", emoji: "🌸", img: "", badge: "New" },
-    { id: 6, name: "Dark Wings", price: 1.8, category: "Dark", emoji: "🦋", img: "", badge: "" },
-  ],
-  categories: ["All", "Dreamy", "Nature", "Cozy", "Aesthetic", "Dark"],
+  stickers: [],
+  categories: [],
   orders: [],
-  packs: [
-    { id: 101, name: "Dreamy Starter Pack", description: "Begin your sticker journey with our most-loved dreamy designs.", price: 3.5, emoji: "✨", img: "", stickerIds: [1, 5], visible: true, isHero: true },
-    { id: 102, name: "Nature Pack", description: "Fresh greens and natural vibes.", price: 2.5, emoji: "🌿", img: "", stickerIds: [2], visible: true, isHero: false },
-    { id: 103, name: "Dark Mood Pack", description: "For the bold and moody aesthetic.", price: 3.0, emoji: "🦋", img: "", stickerIds: [6], visible: true, isHero: false },
-  ],
-  nextId: 200,
+  packs: [],
 };
 
-function loadData(): DB {
-  try {
-    const s = localStorage.getItem(STORAGE_KEY);
-    if (s) {
-      const parsed = JSON.parse(s);
-      if (!parsed.nextId) parsed.nextId = 200;
-      if (!parsed.packs) parsed.packs = defaultDB.packs;
-      // Migrate older packs that may be missing the isHero field
-      parsed.packs = parsed.packs.map((p: Pack) => ({ isHero: false, ...p }));
-      return parsed;
-    }
-  } catch {}
-  return { ...defaultDB, stickers: [...defaultDB.stickers], categories: [...defaultDB.categories], orders: [], packs: [...defaultDB.packs] };
-}
+const USER_KEY = "stickyy_user_data";
+const TOKEN_KEY = "stickyy_token";
 
-const USER_KEY = "stickyy_user";
+const getHeaders = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+  };
+};
+
+const mapId = (arr: any[]) => arr.map(item => ({ ...item, id: item._id, comments: item.comments ? item.comments.map((c: any) => ({...c, id: c._id})) : [] }));
 
 export function useStore() {
-  const [db, setDb] = useState<DB>(loadData);
+  const [db, setDb] = useState<DB>(defaultDB);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [currentUser, setCurrentUser] = useState<string | null>(() => {
-    try { return localStorage.getItem(USER_KEY); } catch { return null; }
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try { 
+      const stored = localStorage.getItem(USER_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
   });
 
-  const login = useCallback((name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    setCurrentUser(trimmed);
-    localStorage.setItem(USER_KEY, trimmed);
+  const fetchData = useCallback(async () => {
+    try {
+      const role = currentUser?.role;
+      const [stRes, paRes, caRes, orRes] = await Promise.all([
+        fetch("/api/stickers").then(r => r.json()),
+        fetch("/api/packs").then(r => r.json()),
+        fetch("/api/categories").then(r => r.json()),
+        role === "admin" ? fetch("/api/orders", { headers: getHeaders() }).then(r => r.json()).catch(() => []) : Promise.resolve([])
+      ]);
+      setDb({
+        stickers: mapId(Array.isArray(stRes) ? stRes : []),
+        packs: mapId(Array.isArray(paRes) ? paRes : []),
+        categories: Array.isArray(caRes) ? caRes.map((c: any) => c.name) : [],
+        orders: mapId(Array.isArray(orRes) ? orRes : []),
+      });
+    } catch (e) {
+      console.error("Failed to load DB state", e);
+    }
+  }, [currentUser?.role]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Auth Methods
+  const loginReq = useCallback(async (phone: string, password: string): Promise<boolean> => {
+    try {
+      const r = await fetch("/api/auth/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password })
+      });
+      if (r.ok) {
+        const data = await r.json();
+        setCurrentUser(data.user);
+        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        localStorage.setItem(TOKEN_KEY, data.token);
+        return true;
+      }
+      return false;
+    } catch (e) { console.error(e); return false; }
+  }, []);
+
+  const registerReq = useCallback(async (phone: string, password: string, name: string): Promise<boolean> => {
+    try {
+      const r = await fetch("/api/auth/register", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password, name })
+      });
+      if (r.ok) {
+        const data = await r.json();
+        setCurrentUser(data.user);
+        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        localStorage.setItem(TOKEN_KEY, data.token);
+        return true;
+      }
+      return false;
+    } catch (e) { console.error(e); return false; }
   }, []);
 
   const logout = useCallback(() => {
     setCurrentUser(null);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TOKEN_KEY);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-  }, [db]);
+  // Upload Method
+  const uploadImage = useCallback(async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const r = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
+        body: formData
+      });
+      if (r.ok) {
+        const data = await r.json();
+        return data.url;
+      }
+      return null;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }, []);
 
-  const addToCart = useCallback((id: number) => {
+  const addToCart = useCallback((id: string) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.id === id);
       if (existing) return prev.map((c) => (c.id === id ? { ...c, qty: c.qty + 1 } : c));
@@ -129,7 +190,7 @@ export function useStore() {
     });
   }, [db.stickers]);
 
-  const addPackToCart = useCallback((packId: number) => {
+  const addPackToCart = useCallback((packId: string) => {
     const pack = db.packs.find((p) => p.id === packId);
     if (!pack || !pack.stickerIds.length) return;
     setCart((prev) => {
@@ -148,191 +209,190 @@ export function useStore() {
     });
   }, [db.packs, db.stickers]);
 
-  const changeQty = useCallback((id: number, delta: number) => {
+  const changeQty = useCallback((id: string, delta: number) => {
     setCart((prev) => {
       const updated = prev.map((c) => (c.id === id ? { ...c, qty: c.qty + delta } : c));
       return updated.filter((c) => c.qty > 0);
     });
   }, []);
 
-  const removeFromCart = useCallback((id: number) => {
+  const removeFromCart = useCallback((id: string) => {
     setCart((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
   const cartTotal = cart.reduce((s, c) => s + c.price * c.qty, 0);
   const cartCount = cart.reduce((s, c) => s + c.qty, 0);
 
-  const submitOrder = useCallback((name: string, phone: string, notes: string) => {
+  const submitOrder = useCallback(async (name: string, phone: string, notes: string) => {
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
-    const order: Order = {
-      id: Date.now(),
+    const orderData = {
       name, phone, notes,
       items: cart.map((c) => ({ name: c.name, qty: c.qty, price: c.price })),
       total,
-      status: "pending",
-      date: new Date().toLocaleDateString("en-GB"),
     };
-    setDb((prev) => ({ ...prev, orders: [order, ...prev.orders] }));
-    setCart([]);
-  }, [cart]);
+    try {
+      const r = await fetch("/api/orders", {
+        method: "POST", headers: getHeaders(), body: JSON.stringify(orderData)
+      });
+      if (r.ok) {
+        if (currentUser?.role === "admin") await fetchData();
+        setCart([]);
+      }
+    } catch(e) { console.error(e) }
+  }, [cart, currentUser, fetchData]);
 
-  const addSticker = useCallback((sticker: Omit<Sticker, "id">) => {
-    setDb((prev) => ({
-      ...prev,
-      stickers: [...prev.stickers, { ...sticker, id: prev.nextId }],
-      nextId: prev.nextId + 1,
-    }));
-  }, []);
+  const addSticker = useCallback(async (sticker: Omit<Sticker, "id">) => {
+    try {
+      const r = await fetch("/api/stickers", {
+        method: "POST", headers: getHeaders(), body: JSON.stringify(sticker)
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const updateSticker = useCallback((id: number, updates: Partial<Sticker>) => {
-    setDb((prev) => ({
-      ...prev,
-      stickers: prev.stickers.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-    }));
-  }, []);
+  const updateSticker = useCallback(async (id: string, updates: Partial<Sticker>) => {
+    try {
+      const r = await fetch(`/api/stickers/${id}`, {
+        method: "PUT", headers: getHeaders(), body: JSON.stringify(updates)
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const deleteSticker = useCallback((id: number) => {
-    setDb((prev) => ({ ...prev, stickers: prev.stickers.filter((s) => s.id !== id) }));
-  }, []);
+  const deleteSticker = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/stickers/${id}`, { method: "DELETE", headers: getHeaders() });
+      await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const addCategory = useCallback((name: string) => {
-    setDb((prev) => {
-      if (prev.categories.includes(name)) return prev;
-      return { ...prev, categories: [...prev.categories, name] };
-    });
-  }, []);
+  const addCategory = useCallback(async (name: string) => {
+    try {
+      const r = await fetch("/api/categories", {
+        method: "POST", headers: getHeaders(), body: JSON.stringify({ name })
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const deleteCategory = useCallback((name: string) => {
-    setDb((prev) => ({ ...prev, categories: prev.categories.filter((c) => c !== name) }));
-  }, []);
+  const deleteCategory = useCallback(async (name: string) => {
+    try {
+      await fetch(`/api/categories/${encodeURIComponent(name)}`, { method: "DELETE", headers: getHeaders() });
+      await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const markOrderDone = useCallback((id: number) => {
-    setDb((prev) => ({
-      ...prev,
-      orders: prev.orders.map((o) => (o.id === id ? { ...o, status: "done" as const } : o)),
-    }));
-  }, []);
+  const markOrderDone = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/orders/${id}/done`, { method: "PATCH", headers: getHeaders() });
+      await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const deleteOrder = useCallback((id: number) => {
-    setDb((prev) => ({ ...prev, orders: prev.orders.filter((o) => o.id !== id) }));
-  }, []);
+  const deleteOrder = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/orders/${id}`, { method: "DELETE", headers: getHeaders() });
+      await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const addReaction = useCallback((stickerId: number, type: ReactionType) => {
-    setDb((prev) => ({
-      ...prev,
-      stickers: prev.stickers.map((s) => {
-        if (s.id !== stickerId) return s;
-        const reactions = s.reactions || { love: 0, haha: 0, like: 0 };
-        return { ...s, reactions: { ...reactions, [type]: reactions[type] + 1 } };
-      }),
-    }));
-  }, []);
+  const addReaction = useCallback(async (stickerId: string, type: ReactionType) => {
+    try {
+      const r = await fetch(`/api/stickers/${stickerId}/reactions`, {
+        method: "POST", headers: getHeaders(), body: JSON.stringify({ type })
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const addComment = useCallback((stickerId: number, author: string, text: string) => {
-    setDb((prev) => ({
-      ...prev,
-      stickers: prev.stickers.map((s) => {
-        if (s.id !== stickerId) return s;
-        const comments = s.comments || [];
-        return {
-          ...s,
-          comments: [...comments, { id: Date.now(), author, text, date: new Date().toLocaleDateString("en-GB") }],
-        };
-      }),
-    }));
-  }, []);
+  const addComment = useCallback(async (stickerId: string, author: string, text: string) => {
+    try {
+      const r = await fetch(`/api/stickers/${stickerId}/comments`, {
+        method: "POST", headers: getHeaders(), body: JSON.stringify({ author, text })
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const deleteComment = useCallback((stickerId: number, commentId: number) => {
-    setDb((prev) => ({
-      ...prev,
-      stickers: prev.stickers.map((s) => {
-        if (s.id !== stickerId) return s;
-        return { ...s, comments: (s.comments || []).filter((c) => c.id !== commentId) };
-      }),
-    }));
-  }, []);
+  const deleteComment = useCallback(async (stickerId: string, commentId: string) => {
+    try {
+      await fetch(`/api/stickers/${stickerId}/comments/${commentId}`, { method: "DELETE", headers: getHeaders() });
+      await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const editComment = useCallback((stickerId: number, commentId: number, newText: string) => {
-    setDb((prev) => ({
-      ...prev,
-      stickers: prev.stickers.map((s) => {
-        if (s.id !== stickerId) return s;
-        return {
-          ...s,
-          comments: (s.comments || []).map((c) =>
-            c.id === commentId ? { ...c, text: newText } : c
-          ),
-        };
-      }),
-    }));
-  }, []);
+  const editComment = useCallback(async (stickerId: string, commentId: string, newText: string) => {
+    try {
+      const r = await fetch(`/api/stickers/${stickerId}/comments/${commentId}`, {
+        method: "PATCH", headers: getHeaders(), body: JSON.stringify({ text: newText })
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  // Pack CRUD
-  const addPack = useCallback((pack: Omit<Pack, "id">) => {
-    setDb((prev) => ({
-      ...prev,
-      packs: [...prev.packs, { ...pack, id: prev.nextId }],
-      nextId: prev.nextId + 1,
-    }));
-  }, []);
+  const addPack = useCallback(async (pack: Omit<Pack, "id">) => {
+    try {
+      const r = await fetch("/api/packs", {
+        method: "POST", headers: getHeaders(), body: JSON.stringify(pack)
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const updatePack = useCallback((id: number, updates: Partial<Pack>) => {
-    setDb((prev) => ({
-      ...prev,
-      packs: prev.packs.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    }));
-  }, []);
+  const updatePack = useCallback(async (id: string, updates: Partial<Pack>) => {
+    try {
+      const r = await fetch(`/api/packs/${id}`, {
+        method: "PUT", headers: getHeaders(), body: JSON.stringify(updates)
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const deletePack = useCallback((id: number) => {
-    setDb((prev) => ({ ...prev, packs: prev.packs.filter((p) => p.id !== id) }));
-  }, []);
+  const deletePack = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/packs/${id}`, { method: "DELETE", headers: getHeaders() });
+      await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  // Pack reactions & comments
-  const addPackReaction = useCallback((packId: number, type: ReactionType) => {
-    setDb((prev) => ({
-      ...prev,
-      packs: prev.packs.map((p) => {
-        if (p.id !== packId) return p;
-        const reactions = p.reactions || { love: 0, haha: 0, like: 0 };
-        return { ...p, reactions: { ...reactions, [type]: reactions[type] + 1 } };
-      }),
-    }));
-  }, []);
+  const addPackReaction = useCallback(async (packId: string, type: ReactionType) => {
+    try {
+      const r = await fetch(`/api/packs/${packId}/reactions`, {
+        method: "POST", headers: getHeaders(), body: JSON.stringify({ type })
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const addPackComment = useCallback((packId: number, author: string, text: string) => {
-    setDb((prev) => ({
-      ...prev,
-      packs: prev.packs.map((p) => {
-        if (p.id !== packId) return p;
-        const comments = p.comments || [];
-        return { ...p, comments: [...comments, { id: Date.now(), author, text, date: new Date().toLocaleDateString("en-GB") }] };
-      }),
-    }));
-  }, []);
+  const addPackComment = useCallback(async (packId: string, author: string, text: string) => {
+    try {
+      const r = await fetch(`/api/packs/${packId}/comments`, {
+        method: "POST", headers: getHeaders(), body: JSON.stringify({ author, text })
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const deletePackComment = useCallback((packId: number, commentId: number) => {
-    setDb((prev) => ({
-      ...prev,
-      packs: prev.packs.map((p) => {
-        if (p.id !== packId) return p;
-        return { ...p, comments: (p.comments || []).filter((c) => c.id !== commentId) };
-      }),
-    }));
-  }, []);
+  const deletePackComment = useCallback(async (packId: string, commentId: string) => {
+    try {
+      await fetch(`/api/packs/${packId}/comments/${commentId}`, { method: "DELETE", headers: getHeaders() });
+      await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
-  const editPackComment = useCallback((packId: number, commentId: number, newText: string) => {
-    setDb((prev) => ({
-      ...prev,
-      packs: prev.packs.map((p) => {
-        if (p.id !== packId) return p;
-        return { ...p, comments: (p.comments || []).map((c) => c.id === commentId ? { ...c, text: newText } : c) };
-      }),
-    }));
-  }, []);
+  const editPackComment = useCallback(async (packId: string, commentId: string, newText: string) => {
+    try {
+      const r = await fetch(`/api/packs/${packId}/comments/${commentId}`, {
+        method: "PATCH", headers: getHeaders(), body: JSON.stringify({ text: newText })
+      });
+      if (r.ok) await fetchData();
+    } catch(e) { console.error(e) }
+  }, [fetchData]);
 
   return {
     db, cart, cartTotal, cartCount,
-    currentUser, login, logout,
+    currentUser, loginReq, registerReq, logout,
+    uploadImage,
     addToCart, addPackToCart, changeQty, removeFromCart,
     submitOrder,
     addSticker, updateSticker, deleteSticker,
@@ -341,5 +401,6 @@ export function useStore() {
     addReaction, addComment, deleteComment, editComment,
     addPack, updatePack, deletePack,
     addPackReaction, addPackComment, deletePackComment, editPackComment,
+    refreshData: fetchData
   };
 }

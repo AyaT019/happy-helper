@@ -16,24 +16,33 @@ const Navbar = ({ onCartOpen }: NavbarProps) => {
         Stick<em className="text-gradient italic">yy.</em>
       </Link>
       <div className="flex items-center gap-2">
-        {currentUser && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-muted-foreground tracking-wide">{currentUser}</span>
+        {currentUser ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground tracking-wide font-medium">{currentUser.name}</span>
             <button
               onClick={logout}
-              className="w-6 h-6 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+              className="w-6 h-6 rounded-full hover:bg-muted flex items-center justify-center transition-colors mr-1"
               title="Log out"
             >
-              <LogOut className="w-3 h-3 text-muted-foreground" />
+              <LogOut className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
+            {currentUser.role === "admin" && (
+              <Link
+                to="/admin"
+                className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] border border-border/60 rounded-full px-3 py-1.5 hover:bg-card hover:border-border transition-all duration-200"
+              >
+                Dashboard
+              </Link>
+            )}
           </div>
+        ) : (
+          <Link
+            to="/admin"
+            className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] border border-border/60 rounded-full px-3 py-1.5 hover:bg-card hover:border-border transition-all duration-200"
+          >
+            Log in
+          </Link>
         )}
-        <Link
-          to="/admin"
-          className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] border border-border/60 rounded-full px-3 py-1.5 hover:bg-card hover:border-border transition-all duration-200"
-        >
-          Admin
-        </Link>
         <button
           onClick={onCartOpen}
           className="relative bg-primary text-primary-foreground rounded-full px-4 py-2 flex items-center gap-2 text-xs font-medium shadow-soft hover:shadow-elevated transition-all duration-200 active:scale-[0.97]"

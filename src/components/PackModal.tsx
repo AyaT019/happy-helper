@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppStore } from "@/store/StoreContext";
 import { Pack, ReactionType } from "@/store/useStore";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,20 +17,19 @@ interface Props {
 }
 
 const PackModal = ({ pack, onClose }: Props) => {
-  const { db, addPackToCart, addPackReaction, addPackComment, deletePackComment, editPackComment, currentUser, login } = useAppStore();
+  const { db, addPackToCart, addPackReaction, addPackComment, deletePackComment, editPackComment, currentUser } = useAppStore();
+  const navigate = useNavigate();
   const [commentText, setCommentText] = useState("");
   const [clickedReaction, setClickedReaction] = useState<ReactionType | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
-  const [loginInput, setLoginInput] = useState("");
-  const [showLogin, setShowLogin] = useState(false);
 
   const reactions = pack.reactions || { love: 0, haha: 0, like: 0 };
   const comments = pack.comments || [];
   const includedStickers = db.stickers.filter((s) => pack.stickerIds.includes(s.id));
 
   const handleReaction = (type: ReactionType) => {
-    if (!currentUser) { setShowLogin(true); return; }
+    if (!currentUser) { onClose(); navigate("/admin"); return; }
     addPackReaction(pack.id, type);
     setClickedReaction(type);
     setTimeout(() => setClickedReaction(null), 400);
@@ -37,27 +37,19 @@ const PackModal = ({ pack, onClose }: Props) => {
 
   const handleComment = () => {
     if (!commentText.trim() || !currentUser) return;
-    addPackComment(pack.id, currentUser, commentText.trim());
+    addPackComment(pack.id, currentUser.name, commentText.trim());
     setCommentText("");
   };
 
-  const handleEdit = (commentId: number, text: string) => {
+  const handleEdit = (commentId: string, text: string) => {
     setEditingId(commentId);
     setEditText(text);
   };
 
-  const submitEdit = (commentId: number) => {
+  const submitEdit = (commentId: string) => {
     if (editText.trim()) editPackComment(pack.id, commentId, editText.trim());
     setEditingId(null);
     setEditText("");
-  };
-
-  const handleLogin = () => {
-    if (loginInput.trim()) {
-      login(loginInput.trim());
-      setLoginInput("");
-      setShowLogin(false);
-    }
   };
 
   return (
@@ -180,7 +172,7 @@ const PackModal = ({ pack, onClose }: Props) => {
                     <div className="flex items-baseline gap-2">
                       <span className="text-xs font-medium">{c.author}</span>
                       <span className="text-[10px] text-muted-foreground">{c.date}</span>
-                      {currentUser && currentUser === c.author && (
+                      {currentUser && currentUser.name === c.author && (
                         <div className="flex items-center gap-1 opacity-0 group-hover/comment:opacity-100 transition-opacity ml-auto">
                           <button onClick={() => handleEdit(c.id, c.text)} className="w-5 h-5 rounded-full hover:bg-muted flex items-center justify-center">
                             <Pencil className="w-2.5 h-2.5 text-muted-foreground" />
@@ -220,30 +212,10 @@ const PackModal = ({ pack, onClose }: Props) => {
           {/* Login prompt or Comment input */}
           {!currentUser ? (
             <div className="p-3 border-t border-border/60">
-              {showLogin ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Enter your name to join the conversation</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={loginInput}
-                      onChange={(e) => setLoginInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                      placeholder="Your name..."
-                      className="flex-1 bg-muted/30 border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-accent transition-colors"
-                      autoFocus
-                    />
-                    <button onClick={handleLogin} disabled={!loginInput.trim()} className="bg-accent text-accent-foreground px-4 py-2 rounded-full text-xs font-medium shadow-soft disabled:opacity-40">
-                      Join
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button onClick={() => setShowLogin(true)} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 text-xs text-muted-foreground hover:border-accent/50 hover:text-foreground transition-all">
-                  <LogIn className="w-3.5 h-3.5" />
-                  Log in to react & comment
-                </button>
-              )}
+              <button onClick={() => { onClose(); navigate("/admin"); }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 text-xs text-muted-foreground hover:border-accent/50 hover:text-foreground transition-all">
+                <LogIn className="w-3.5 h-3.5" />
+                Log in to join the conversation
+              </button>
             </div>
           ) : (
             <div className="p-3 border-t border-border/60">
@@ -253,7 +225,7 @@ const PackModal = ({ pack, onClose }: Props) => {
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleComment()}
-                  placeholder={`Comment as ${currentUser}...`}
+                  placeholder={`Comment as ${currentUser.name}...`}
                   className="flex-1 bg-muted/30 border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-accent transition-colors"
                 />
                 <button onClick={handleComment} disabled={!commentText.trim()} className="bg-accent text-accent-foreground w-8 h-8 rounded-full flex items-center justify-center shadow-soft hover:shadow-elevated active:scale-90 transition-all disabled:opacity-40">

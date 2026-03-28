@@ -1,6 +1,6 @@
 import express from "express";
 import { Category } from "../models/Category.js";
-import { requireAdmin } from "../middleware/adminAuth.js";
+import { requireAdmin } from "../middleware/auth.middleware.js";
 
 export const router = express.Router();
 
