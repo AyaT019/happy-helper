@@ -3,11 +3,9 @@ import { motion } from "framer-motion";
 
 const SpecialDrops = () => {
   const { db, addPackToCart } = useAppStore();
-  console.log("[SpecialDrops] All packs:", JSON.stringify(db.packs.map(p => ({ id: p.id, name: p.name, visible: p.visible, isHero: p.isHero }))));
   const visiblePacks = db.packs.filter((p) => p.visible);
-  console.log("[SpecialDrops] Visible packs:", visiblePacks.length);
   const heroPack = visiblePacks.find((p) => p.isHero);
-  const miniPacks = visiblePacks.filter((p) => !p.isHero);
+  const miniPacks = visiblePacks.filter((p) => p !== heroPack);
 
   if (!visiblePacks.length) return null;
 
