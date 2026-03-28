@@ -1,11 +1,18 @@
+import { useState } from "react";
 import { useAppStore } from "@/store/StoreContext";
+import { Pack } from "@/store/useStore";
 import { motion } from "framer-motion";
+import PackModal from "./PackModal";
 
 const SpecialDrops = () => {
   const { db, addPackToCart } = useAppStore();
+  const [selectedPack, setSelectedPack] = useState<Pack | null>(null);
   const visiblePacks = db.packs.filter((p) => p.visible);
   const heroPack = visiblePacks.find((p) => p.isHero);
   const miniPacks = visiblePacks.filter((p) => p !== heroPack);
+
+  // Keep modal pack in sync with db
+  const livePack = selectedPack ? db.packs.find((p) => p.id === selectedPack.id) || null : null;
 
   if (!visiblePacks.length) return null;
 
@@ -27,7 +34,8 @@ const SpecialDrops = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="relative rounded-2xl overflow-hidden bg-primary text-primary-foreground shadow-elevated"
+            className="relative rounded-2xl overflow-hidden bg-primary text-primary-foreground shadow-elevated cursor-pointer"
+            onClick={() => setSelectedPack(heroPack)}
           >
             {heroPack.img ? (
               <img src={heroPack.img} alt={heroPack.name} className="absolute inset-0 w-full h-full object-cover opacity-30" />
@@ -43,7 +51,7 @@ const SpecialDrops = () => {
               <div className="flex items-center justify-between">
                 <span className="font-display text-xl">{heroPack.price.toFixed(3)} TND</span>
                 <button
-                  onClick={() => addPackToCart(heroPack.id)}
+                  onClick={(e) => { e.stopPropagation(); addPackToCart(heroPack.id); }}
                   className="bg-accent text-accent-foreground px-5 py-2.5 rounded-full text-xs font-medium shadow-soft hover:shadow-elevated active:scale-[0.97] transition-all"
                 >
                   Add to cart
@@ -64,7 +72,7 @@ const SpecialDrops = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.08 }}
-              onClick={() => addPackToCart(pack.id)}
+              onClick={() => setSelectedPack(pack)}
               className="bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all duration-200 shadow-card hover:shadow-elevated"
             >
               <div className="h-[80px] bg-muted/50 flex items-center justify-center overflow-hidden relative">
@@ -82,6 +90,11 @@ const SpecialDrops = () => {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Pack Modal */}
+      {livePack && (
+        <PackModal pack={livePack} onClose={() => setSelectedPack(null)} />
       )}
     </div>
   );
