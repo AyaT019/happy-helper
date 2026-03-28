@@ -35,6 +35,8 @@ export interface Pack {
   stickerIds: number[];
   visible: boolean;
   isHero: boolean;
+  reactions?: Record<ReactionType, number>;
+  comments?: Comment[];
 }
 
 export interface Order {
@@ -285,6 +287,49 @@ export function useStore() {
     setDb((prev) => ({ ...prev, packs: prev.packs.filter((p) => p.id !== id) }));
   }, []);
 
+  // Pack reactions & comments
+  const addPackReaction = useCallback((packId: number, type: ReactionType) => {
+    setDb((prev) => ({
+      ...prev,
+      packs: prev.packs.map((p) => {
+        if (p.id !== packId) return p;
+        const reactions = p.reactions || { love: 0, haha: 0, like: 0 };
+        return { ...p, reactions: { ...reactions, [type]: reactions[type] + 1 } };
+      }),
+    }));
+  }, []);
+
+  const addPackComment = useCallback((packId: number, author: string, text: string) => {
+    setDb((prev) => ({
+      ...prev,
+      packs: prev.packs.map((p) => {
+        if (p.id !== packId) return p;
+        const comments = p.comments || [];
+        return { ...p, comments: [...comments, { id: Date.now(), author, text, date: new Date().toLocaleDateString("en-GB") }] };
+      }),
+    }));
+  }, []);
+
+  const deletePackComment = useCallback((packId: number, commentId: number) => {
+    setDb((prev) => ({
+      ...prev,
+      packs: prev.packs.map((p) => {
+        if (p.id !== packId) return p;
+        return { ...p, comments: (p.comments || []).filter((c) => c.id !== commentId) };
+      }),
+    }));
+  }, []);
+
+  const editPackComment = useCallback((packId: number, commentId: number, newText: string) => {
+    setDb((prev) => ({
+      ...prev,
+      packs: prev.packs.map((p) => {
+        if (p.id !== packId) return p;
+        return { ...p, comments: (p.comments || []).map((c) => c.id === commentId ? { ...c, text: newText } : c) };
+      }),
+    }));
+  }, []);
+
   return {
     db, cart, cartTotal, cartCount,
     currentUser, login, logout,
@@ -295,5 +340,6 @@ export function useStore() {
     markOrderDone, deleteOrder,
     addReaction, addComment, deleteComment, editComment,
     addPack, updatePack, deletePack,
+    addPackReaction, addPackComment, deletePackComment, editPackComment,
   };
 }
