@@ -28,7 +28,7 @@ const OrderPage = () => {
     submitOrder(name.trim(), finalPhone, notes.trim());
 
     // Construct the WhatsApp message payload
-    const message = `Hi Eya! ✨ I just placed a new order!\n\n*Name:* ${name.trim()}\n*Phone:* ${finalPhone}\n*Items:* ${cart.map(c => `${c.qty}x ${c.name}`).join(', ')}\n*Total:* ${cartTotal.toFixed(3)} TND\n*Notes:* ${notes.trim() || 'None'}`;
+    const message = `Hi Stickyy ✨ I just placed a new order!\n\n*Name:* ${name.trim()}\n*Phone:* ${finalPhone}\n*Items:* ${cart.map(c => `${c.qty}x ${c.name}`).join(', ')}\n*Total:* ${cartTotal.toFixed(3)} TND\n*Notes:* ${notes.trim() || 'None'}`;
     
     const whatsappUrl = `https://api.whatsapp.com/send/?phone=21654999568&text=${encodeURIComponent(message)}`;
     
