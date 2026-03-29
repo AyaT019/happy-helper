@@ -324,7 +324,6 @@ const AdminPage = () => {
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">{s.price.toFixed(3)} TND</div>
                   </div>
-                  </div>
                   <div className="flex gap-1.5 shrink-0">
                     <button onClick={() => startEdit(s.id)} className="px-2.5 py-1 text-[11px] rounded-lg bg-muted text-foreground border border-border">Edit</button>
                     <button onClick={() => { if (confirm("Delete this sticker?")) deleteSticker(s.id); }} className="px-2.5 py-1 text-[11px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">Del</button>
