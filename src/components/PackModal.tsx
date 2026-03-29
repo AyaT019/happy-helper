@@ -121,16 +121,23 @@ const PackModal = ({ pack, onClose }: Props) => {
           {/* Included stickers */}
           {includedStickers.length > 0 && (
             <div className="px-4 py-3 border-b border-border/60">
-              <div className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground mb-2 font-medium">What's inside</div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-px flex-1 bg-border/60" />
+                <span className="text-[10px] tracking-[0.14em] uppercase text-muted-foreground font-medium">What's inside</span>
+                <div className="h-px flex-1 bg-border/60" />
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
                 {includedStickers.map((s) => (
-                  <div key={s.id} className="flex items-center gap-1.5 bg-muted/40 rounded-full px-2.5 py-1">
+                  <div key={s.id} className="rounded-xl p-2 flex flex-col items-center" style={{ backgroundColor: '#efe8d6' }}>
                     {s.img ? (
-                      <img src={s.img} alt={s.name} className="w-5 h-5 rounded-full object-cover" />
+                      <img src={s.img} alt={s.name} className="w-full h-20 object-cover rounded-lg" />
                     ) : (
-                      <span className="text-sm">{s.emoji || "🌸"}</span>
+                      <div className="w-full h-20 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#e8dfc8' }}>
+                        <span className="text-[52px] leading-none">{s.emoji || "🌸"}</span>
+                      </div>
                     )}
-                    <span className="text-[11px] font-medium">{s.name}</span>
+                    <span className="text-sm font-medium mt-1.5 text-center leading-tight font-sans">{s.name}</span>
+                    <span className="text-xs font-display text-accent mt-0.5">{s.price.toFixed(3)} TND</span>
                   </div>
                 ))}
               </div>
