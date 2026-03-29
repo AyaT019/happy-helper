@@ -43,7 +43,7 @@ const AdminPage = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [sName, setSName] = useState("");
   const [sPrice, setSPrice] = useState("");
-  const [sCat, setSCat] = useState("");
+  const [sCats, setSCats] = useState<string[]>([]);
   const [imgBase64, setImgBase64] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const excelRef = useRef<HTMLInputElement>(null);
@@ -103,13 +103,14 @@ const AdminPage = () => {
       rows.forEach((row) => {
         const name = getField(row, ["name", "Name", "product", "Product"]);
         const priceText = getField(row, ["price", "Price"]);
-        const category = getField(row, ["category", "Category"]) || "General";
+      const category = getField(row, ["category", "Category"]) || "General";
+        const categories = category.includes(",") ? category.split(",").map((c: string) => c.trim()) : [category];
         const emoji = getField(row, ["emoji", "Emoji"]) || "🌸";
         const img = getField(row, ["img", "image", "imageUrl", "Image", "ImageUrl"]);
         const badge = getField(row, ["badge", "Badge"]);
         const price = Number(priceText);
         if (!name || Number.isNaN(price)) { skipped += 1; return; }
-        addSticker({ name, price, category, emoji, img, badge });
+        addSticker({ name, price, category: categories[0], categories, emoji, img, badge });
         imported += 1;
       });
       setImportMessage(`Imported ${imported} product(s). Skipped ${skipped} invalid row(s).`);
@@ -121,7 +122,7 @@ const AdminPage = () => {
   };
 
   const resetForm = () => {
-    setEditId(null); setSName(""); setSPrice(""); setSCat(""); setImgBase64("");
+    setEditId(null); setSName(""); setSPrice(""); setSCats([]); setImgBase64("");
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -129,10 +130,11 @@ const AdminPage = () => {
     const name = sName.trim();
     const price = parseFloat(sPrice);
     if (!name || isNaN(price)) { alert("Please fill in name and price."); return; }
+    const selectedCats = sCats.length ? sCats : ["General"];
     if (editId !== null) {
-      updateSticker(editId, { name, price, category: sCat || "General", ...(imgBase64 ? { img: imgBase64 } : {}) });
+      updateSticker(editId, { name, price, category: selectedCats[0], categories: selectedCats, ...(imgBase64 ? { img: imgBase64 } : {}) });
     } else {
-      addSticker({ name, price, category: sCat || "General", emoji: "🌸", img: imgBase64, badge: "" });
+      addSticker({ name, price, category: selectedCats[0], categories: selectedCats, emoji: "🌸", img: imgBase64, badge: "" });
     }
     resetForm();
   };
@@ -140,7 +142,7 @@ const AdminPage = () => {
   const startEdit = (id: string) => {
     const s = db.stickers.find((x) => x.id === id);
     if (!s) return;
-    setEditId(id); setSName(s.name); setSPrice(String(s.price)); setSCat(s.category); setImgBase64(s.img || "");
+    setEditId(id); setSName(s.name); setSPrice(String(s.price)); setSCats(s.categories?.length ? [...s.categories] : (s.category ? [s.category] : [])); setImgBase64(s.img || "");
   };
 
   const resetPackForm = () => {
@@ -282,12 +284,25 @@ const AdminPage = () => {
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                 <input value={sName} onChange={(e) => setSName(e.target.value)} placeholder="Sticker name" className={`${inputCls} mb-2.5`} />
-                <div className="grid grid-cols-2 gap-2.5 mb-2.5">
+                <div className="mb-2.5">
                   <input value={sPrice} onChange={(e) => setSPrice(e.target.value)} type="number" placeholder="Price (TND)" step="0.1" min="0" className={inputCls} />
-                  <select value={sCat} onChange={(e) => setSCat(e.target.value)} className={inputCls}>
-                    <option value="">Category</option>
-                    {cats.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                </div>
+                <div className="mb-2.5">
+                  <div className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Categories</div>
+                  <div className="max-h-[120px] overflow-y-auto space-y-1.5 border border-border rounded-lg p-2 bg-muted/30">
+                    {cats.map((c) => (
+                      <label key={c} className="flex items-center gap-2 cursor-pointer text-xs">
+                        <input
+                          type="checkbox"
+                          checked={sCats.includes(c)}
+                          onChange={() => setSCats((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c])}
+                          className="rounded accent-accent"
+                        />
+                        <span>{c}</span>
+                      </label>
+                    ))}
+                    {!cats.length && <span className="text-[11px] text-muted-foreground">No categories yet. Create one in the Categories tab.</span>}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={handleSave} className="flex-1 bg-accent text-accent-foreground py-2.5 rounded-xl text-sm font-medium">Save sticker</button>
@@ -302,7 +317,13 @@ const AdminPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium">{s.name}</div>
-                    <div className="text-[11px] text-muted-foreground">{s.category} · {s.price.toFixed(3)} TND</div>
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {(s.categories?.length ? s.categories : [s.category]).map((c) => (
+                        <span key={c} className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/50">{c}</span>
+                      ))}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{s.price.toFixed(3)} TND</div>
+                  </div>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     <button onClick={() => startEdit(s.id)} className="px-2.5 py-1 text-[11px] rounded-lg bg-muted text-foreground border border-border">Edit</button>
@@ -378,7 +399,7 @@ const AdminPage = () => {
                 </div>
               ) : (
                 cats.map((c) => {
-                  const count = db.stickers.filter((s) => s.category === c).length;
+                  const count = db.stickers.filter((s) => s.categories?.includes(c) || s.category === c).length;
                   return (
                     <div key={c} className="flex items-center justify-between bg-card rounded-xl px-3.5 py-3 mb-2">
                       <div className="flex items-center gap-3">
