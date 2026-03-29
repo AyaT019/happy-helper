@@ -14,7 +14,7 @@ const StickerGrid = () => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
 
   const cats = ["All", ...db.categories.filter((c) => c !== "All")];
-  const byCategory = filter === "All" ? db.stickers : db.stickers.filter((s) => s.category === filter);
+  const byCategory = filter === "All" ? db.stickers : db.stickers.filter((s) => s.categories?.includes(filter) || s.category === filter);
   const filtered = search.trim()
     ? byCategory.filter((s) => s.name.toLowerCase().includes(search.trim().toLowerCase()))
     : byCategory;
@@ -105,7 +105,7 @@ const StickerGrid = () => {
                 </div>
                 <div className="p-3 pb-3.5">
                   <div className="text-[13px] font-medium leading-tight">{s.name}</div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{s.category}</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{s.categories?.length ? s.categories.join(", ") : s.category}</div>
 
                   <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
                     {totalReactions(s) > 0 && (
