@@ -14,6 +14,7 @@ export interface Sticker {
   name: string;
   price: number;
   category: string;
+  categories: string[];
   emoji: string;
   img: string;
   badge: string;
@@ -82,7 +83,12 @@ const getHeaders = () => {
   };
 };
 
-const mapId = (arr: any[]) => arr.map(item => ({ ...item, id: item._id, comments: item.comments ? item.comments.map((c: any) => ({...c, id: c._id})) : [] }));
+const mapId = (arr: any[]) => arr.map(item => ({
+  ...item,
+  id: item._id,
+  categories: item.categories?.length ? item.categories : (item.category ? [item.category] : []),
+  comments: item.comments ? item.comments.map((c: any) => ({...c, id: c._id})) : []
+}));
 
 export function useStore() {
   const [db, setDb] = useState<DB>(defaultDB);

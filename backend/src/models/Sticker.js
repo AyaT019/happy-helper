@@ -22,7 +22,8 @@ const StickerSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    category: { type: String, required: true },
+    category: { type: String, default: "" },
+    categories: { type: [String], default: [] },
     emoji: { type: String, default: "🌸" },
     img: { type: String, default: "" }, // base64 or URL
     badge: { type: String, default: "" },
