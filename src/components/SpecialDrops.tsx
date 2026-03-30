@@ -65,7 +65,7 @@ const SpecialDrops = () => {
 
       {/* Mini Packs Grid */}
       {miniPacks.length > 0 && (
-        <div className="px-5 grid grid-cols-2 gap-3">
+        <div className="px-5 md:px-8 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {miniPacks.map((pack, i) => (
             <motion.div
               key={pack.id}
