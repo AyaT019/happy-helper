@@ -78,7 +78,7 @@ const StickerGrid = () => {
             <p className="text-sm">No stickers found.</p>
           </motion.div>
         ) : (
-          <div className="columns-2 gap-3 space-y-3">
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-4 space-y-3 md:space-y-4">
             {filtered.map((s, i) => (
               <motion.div
                 key={s.id}
