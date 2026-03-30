@@ -36,7 +36,7 @@ const StickerGrid = () => {
       </div>
 
       {/* Search bar */}
-      <div className="px-5 pb-3">
+      <div className="px-5 md:px-8 pb-3">
         <div className="relative group">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
           <input
@@ -50,7 +50,7 @@ const StickerGrid = () => {
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-2 px-5 pb-5 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-2 px-5 md:px-8 pb-5 overflow-x-auto scrollbar-hide">
         {cats.map((c) => (
           <button
             key={c}
@@ -67,7 +67,7 @@ const StickerGrid = () => {
       </div>
 
       {/* Masonry Grid */}
-      <div className="px-5">
+      <div className="px-5 md:px-8">
         {!filtered.length ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -78,7 +78,7 @@ const StickerGrid = () => {
             <p className="text-sm">No stickers found.</p>
           </motion.div>
         ) : (
-          <div className="columns-2 gap-3 space-y-3">
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-3 md:gap-4 space-y-3 md:space-y-4">
             {filtered.map((s, i) => (
               <motion.div
                 key={s.id}

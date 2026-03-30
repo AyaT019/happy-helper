@@ -12,12 +12,12 @@ const floatingEmojis = [
 
 const Hero = () => (
   <div className="relative overflow-hidden">
-    <div className="px-5 pt-8 pb-2 relative z-10">
+    <div className="px-5 pt-8 pb-2 relative z-10 md:pt-14 md:pb-4 md:px-10">
       <motion.p
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-2"
+        className="text-[10px] md:text-xs tracking-[0.2em] uppercase text-muted-foreground mb-2"
       >
         The sticker magazine
       </motion.p>
@@ -25,7 +25,7 @@ const Hero = () => (
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="font-display text-[56px] leading-none tracking-[-2px] mb-1"
+        className="font-display text-[56px] md:text-[72px] lg:text-[84px] leading-none tracking-[-2px] mb-1"
       >
         Stick<em className="text-gradient italic">yy.</em>
       </motion.h1>
@@ -43,7 +43,7 @@ const Hero = () => (
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, delay: 0.3 }}
-      className="relative w-full h-[180px] flex items-center justify-center overflow-hidden"
+      className="relative w-full h-[180px] md:h-[300px] flex items-center justify-center overflow-hidden"
     >
       {/* Floating emojis */}
       {floatingEmojis.map((item, i) => (
@@ -69,7 +69,7 @@ const Hero = () => (
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, delay: 0.5 }}
-          className="font-display italic text-xl text-foreground leading-snug"
+          className="font-display italic text-xl md:text-3xl text-foreground leading-snug"
         >
           "Every surface is<br />a canvas."
         </motion.p>

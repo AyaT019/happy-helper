@@ -182,7 +182,7 @@ const AdminPage = () => {
 
   return (
     <div>
-      <nav className="flex justify-between items-center px-5 py-[18px] sticky top-0 bg-background z-50 border-b border-border">
+      <nav className="flex justify-between items-center px-5 md:px-10 py-[18px] sticky top-0 bg-background z-50 border-b border-border">
         <Link to="/" className="text-xl text-foreground">←</Link>
         <span className="font-display text-[22px]">Admin</span>
         {loggedIn ? (
@@ -226,13 +226,13 @@ const AdminPage = () => {
           {authError && <p className="text-destructive text-xs text-center mt-3">{authError}</p>}
         </div>
       ) : (
-        <div className="px-5 pb-8">
+        <div className="px-5 md:px-10 pb-8 md:max-w-[1100px] md:mx-auto">
           <div className="pt-4 pb-3">
             <h2 className="font-display text-2xl">Dashboard</h2>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-2.5 mb-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
             {[
               { label: "Total orders", value: totalOrders, color: "" },
               { label: "Pending", value: pendingOrders, color: "text-yellow-700" },

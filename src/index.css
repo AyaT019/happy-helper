@@ -58,8 +58,6 @@
   }
   body {
     @apply bg-background text-foreground font-body antialiased;
-    max-width: 420px;
-    margin: 0 auto;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

@@ -47,7 +47,7 @@ const OrderPage = () => {
 
   return (
     <div>
-      <nav className="flex justify-between items-center px-5 py-4 sticky top-0 glass z-50 border-b border-border/50">
+      <nav className="flex justify-between items-center px-5 md:px-10 py-4 md:py-5 sticky top-0 glass z-50 border-b border-border/50">
         <Link to="/" className="text-foreground p-1 hover:bg-card rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -59,7 +59,7 @@ const OrderPage = () => {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="px-5 pt-7 pb-12"
+        className="px-5 pt-7 pb-12 md:max-w-[600px] md:mx-auto md:pt-12"
       >
         <h1 className="font-display text-[30px] mb-1">Your order</h1>
         <p className="text-[13px] text-muted-foreground mb-7">Fill in your details and we'll get it to you on campus.</p>
