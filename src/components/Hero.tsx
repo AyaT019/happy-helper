@@ -43,7 +43,7 @@ const Hero = () => (
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, delay: 0.3 }}
-      className="relative w-full h-[180px] flex items-center justify-center overflow-hidden"
+      className="relative w-full h-[180px] md:h-[300px] flex items-center justify-center overflow-hidden"
     >
       {/* Floating emojis */}
       {floatingEmojis.map((item, i) => (
