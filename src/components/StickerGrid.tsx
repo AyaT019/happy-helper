@@ -36,7 +36,7 @@ const StickerGrid = () => {
       </div>
 
       {/* Search bar */}
-      <div className="px-5 pb-3">
+      <div className="px-5 md:px-8 pb-3">
         <div className="relative group">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
           <input
