@@ -232,7 +232,7 @@ const AdminPage = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-2.5 mb-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-5">
             {[
               { label: "Total orders", value: totalOrders, color: "" },
               { label: "Pending", value: pendingOrders, color: "text-yellow-700" },
