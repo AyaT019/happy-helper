@@ -12,12 +12,12 @@ const floatingEmojis = [
 
 const Hero = () => (
   <div className="relative overflow-hidden">
-    <div className="px-5 pt-8 pb-2 relative z-10">
+    <div className="px-5 pt-8 pb-2 relative z-10 md:pt-14 md:pb-4 md:px-10">
       <motion.p
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-2"
+        className="text-[10px] md:text-xs tracking-[0.2em] uppercase text-muted-foreground mb-2"
       >
         The sticker magazine
       </motion.p>
@@ -25,7 +25,7 @@ const Hero = () => (
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="font-display text-[56px] leading-none tracking-[-2px] mb-1"
+        className="font-display text-[56px] md:text-[72px] lg:text-[84px] leading-none tracking-[-2px] mb-1"
       >
         Stick<em className="text-gradient italic">yy.</em>
       </motion.h1>
