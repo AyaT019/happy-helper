@@ -59,7 +59,7 @@ const OrderPage = () => {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="px-5 pt-7 pb-12"
+        className="px-5 pt-7 pb-12 md:max-w-[600px] md:mx-auto md:pt-12"
       >
         <h1 className="font-display text-[30px] mb-1">Your order</h1>
         <p className="text-[13px] text-muted-foreground mb-7">Fill in your details and we'll get it to you on campus.</p>
