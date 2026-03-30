@@ -67,7 +67,7 @@ const StickerGrid = () => {
       </div>
 
       {/* Masonry Grid */}
-      <div className="px-5">
+      <div className="px-5 md:px-8">
         {!filtered.length ? (
           <motion.div
             initial={{ opacity: 0 }}

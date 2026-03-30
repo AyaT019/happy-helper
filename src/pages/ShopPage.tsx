@@ -11,7 +11,7 @@ const ShopPage = () => {
   const [cartOpen, setCartOpen] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative max-w-[1100px] mx-auto">
       {/* Film grain overlay */}
       <div
         className="pointer-events-none fixed inset-0 z-[999] opacity-[0.03]"

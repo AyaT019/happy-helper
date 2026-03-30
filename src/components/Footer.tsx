@@ -1,5 +1,5 @@
 const Footer = () => (
-  <footer className="bg-primary text-primary-foreground/60 py-8 px-5 text-center mt-10 rounded-t-[28px]">
+  <footer className="bg-primary text-primary-foreground/60 py-8 md:py-12 px-5 md:px-10 text-center mt-10 rounded-t-[28px]">
     <strong className="block font-display text-2xl text-primary-foreground font-normal mb-1.5">
       Stick<em className="italic opacity-80">yy.</em>
     </strong>

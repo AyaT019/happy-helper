@@ -33,10 +33,13 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         )}
       </AnimatePresence>
 
-      {/* Drawer */}
+      {/* Drawer — bottom sheet on mobile, right sidebar on desktop */}
       <div
-        className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] bg-background rounded-t-[28px] px-5 pt-5 pb-8 z-[201] max-h-[85vh] overflow-y-auto transition-transform duration-300 ease-out shadow-elevated ${
-          open ? "translate-y-0" : "translate-y-full"
+        className={`fixed z-[201] overflow-y-auto transition-all duration-300 ease-out shadow-elevated bg-background
+          /* mobile: bottom sheet */
+          bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] rounded-t-[28px] px-5 pt-5 pb-8 max-h-[85vh]
+          md:left-auto md:translate-x-0 md:right-0 md:top-0 md:bottom-0 md:max-w-[400px] md:w-[400px] md:rounded-t-none md:rounded-l-[28px] md:max-h-full md:px-6 md:pt-8 md:pb-8
+          ${open ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-y-0 md:translate-x-full"
         }`}
       >
         <div className="w-10 h-1 bg-border rounded-full mx-auto mb-5" />

@@ -29,7 +29,7 @@ const SpecialDrops = () => {
 
       {/* Hero Pack */}
       {heroPack && (
-        <div className="px-5 mb-4">
+        <div className="px-5 md:px-8 mb-4">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}

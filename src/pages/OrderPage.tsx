@@ -47,7 +47,7 @@ const OrderPage = () => {
 
   return (
     <div>
-      <nav className="flex justify-between items-center px-5 py-4 sticky top-0 glass z-50 border-b border-border/50">
+      <nav className="flex justify-between items-center px-5 md:px-10 py-4 md:py-5 sticky top-0 glass z-50 border-b border-border/50">
         <Link to="/" className="text-foreground p-1 hover:bg-card rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>

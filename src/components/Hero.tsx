@@ -69,7 +69,7 @@ const Hero = () => (
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, delay: 0.5 }}
-          className="font-display italic text-xl text-foreground leading-snug"
+          className="font-display italic text-xl md:text-3xl text-foreground leading-snug"
         >
           "Every surface is<br />a canvas."
         </motion.p>

@@ -182,7 +182,7 @@ const AdminPage = () => {
 
   return (
     <div>
-      <nav className="flex justify-between items-center px-5 py-[18px] sticky top-0 bg-background z-50 border-b border-border">
+      <nav className="flex justify-between items-center px-5 md:px-10 py-[18px] sticky top-0 bg-background z-50 border-b border-border">
         <Link to="/" className="text-xl text-foreground">←</Link>
         <span className="font-display text-[22px]">Admin</span>
         {loggedIn ? (
