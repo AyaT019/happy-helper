@@ -226,7 +226,7 @@ const AdminPage = () => {
           {authError && <p className="text-destructive text-xs text-center mt-3">{authError}</p>}
         </div>
       ) : (
-        <div className="px-5 pb-8">
+        <div className="px-5 md:px-10 pb-8 md:max-w-[1100px] md:mx-auto">
           <div className="pt-4 pb-3">
             <h2 className="font-display text-2xl">Dashboard</h2>
           </div>
