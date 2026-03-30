@@ -50,7 +50,7 @@ const StickerGrid = () => {
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-2 px-5 pb-5 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-2 px-5 md:px-8 pb-5 overflow-x-auto scrollbar-hide">
         {cats.map((c) => (
           <button
             key={c}
