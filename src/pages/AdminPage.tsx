@@ -3,8 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppStore } from "@/store/StoreContext";
 import * as XLSX from "xlsx";
 
-const ADMIN_PASSWORD = "stickyy2026";
-
 const AdminPage = () => {
   const store = useAppStore();
   const { db, currentUser, loginReq, registerReq, uploadImage, addSticker, updateSticker, deleteSticker, addCategory, deleteCategory, markOrderDone, deleteOrder, addPack, updatePack, deletePack } = store;

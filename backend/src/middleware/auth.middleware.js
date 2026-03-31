@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "happyhelper_secret_key_2026";
+// JWT_SECRET is mandatory — if not set, the server startup will already have crashed.
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const requireAuth = async (req, res, next) => {
   let token;
@@ -20,7 +21,7 @@ export const requireAuth = async (req, res, next) => {
       return res.status(401).json({ error: "Not authorized, user not found" });
     }
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: "Not authorized, token failed" });
   }
 };
@@ -38,14 +39,14 @@ export const requireAdmin = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");
-    
+
     if (user && user.role === "admin") {
       req.user = user;
       next();
     } else {
       return res.status(403).json({ error: "Not authorized as admin" });
     }
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: "Not authorized, token failed" });
   }
 };
