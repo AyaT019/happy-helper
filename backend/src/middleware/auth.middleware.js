@@ -1,8 +1,6 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 
-// JWT_SECRET is mandatory — if not set, the server startup will already have crashed.
-const JWT_SECRET = process.env.JWT_SECRET;
 
 export const requireAuth = async (req, res, next) => {
   let token;
@@ -15,7 +13,7 @@ export const requireAuth = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id).select("-password");
     if (!req.user) {
       return res.status(401).json({ error: "Not authorized, user not found" });
@@ -37,7 +35,7 @@ export const requireAdmin = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");
 
     if (user && user.role === "admin") {

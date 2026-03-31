@@ -6,8 +6,6 @@ import { User } from "../models/User.js";
 
 export const router = express.Router();
 
-// JWT_SECRET is mandatory — if not set, the server startup will already have crashed.
-const JWT_SECRET = process.env.JWT_SECRET;
 
 // ── Rate limiters ─────────────────────────────────────────────────────────────
 // Max 10 login attempts per 15 minutes per IP
@@ -62,7 +60,7 @@ router.post("/register", registerLimiter, async (req, res, next) => {
 
     const token = jwt.sign(
       { id: user._id, role: user.role, name: user.name },
-      JWT_SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
 
@@ -100,7 +98,7 @@ router.post("/login", loginLimiter, async (req, res, next) => {
 
     const token = jwt.sign(
       { id: user._id, role: user.role, name: user.name },
-      JWT_SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
 
