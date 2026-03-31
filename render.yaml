@@ -3,12 +3,14 @@ services:
     name: happy-helper
     env: node
     plan: free
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: NODE_ENV=development npm install && npm run build
     startCommand: npm start
     envVars:
       # ── Required ──────────────────────────────────────────────────────────────
       - key: NODE_ENV
         value: production
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
