@@ -74,6 +74,7 @@ const defaultDB: DB = {
 
 const USER_KEY = "stickyy_user_data";
 const TOKEN_KEY = "stickyy_token";
+const CART_KEY = "stickyy_cart";
 
 const getHeaders = () => {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -100,7 +101,12 @@ const fileToDataUrl = (file: File): Promise<string> =>
 
 export function useStore() {
   const [db, setDb] = useState<DB>(defaultDB);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const stored = localStorage.getItem(CART_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try { 
       const stored = localStorage.getItem(USER_KEY);
@@ -131,6 +137,13 @@ export function useStore() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch { /* quota exceeded — ignore */ }
+  }, [cart]);
 
   // Auth Methods
   const loginReq = useCallback(async (phone: string, password: string): Promise<boolean> => {
@@ -169,8 +182,10 @@ export function useStore() {
 
   const logout = useCallback(() => {
     setCurrentUser(null);
+    setCart([]);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(CART_KEY);
   }, []);
 
   // Upload Method
@@ -256,6 +271,7 @@ export function useStore() {
       if (r.ok) {
         if (currentUser?.role === "admin") await fetchData();
         setCart([]);
+        localStorage.removeItem(CART_KEY);
       }
     } catch(e) { console.error(e) }
   }, [cart, currentUser, fetchData]);
