@@ -48,6 +48,29 @@ const AdminPage = () => {
   const [newCat, setNewCat] = useState("");
   const [importMessage, setImportMessage] = useState("");
 
+  // Multi-select for bulk delete
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const toggleSelectMode = () => {
+    setSelectMode((prev) => !prev);
+    setSelectedIds([]);
+  };
+
+  const toggleSelectId = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = () => {
+    if (!selectedIds.length) return;
+    if (!confirm(`Delete ${selectedIds.length} sticker(s)? This cannot be undone.`)) return;
+    selectedIds.forEach((id) => deleteSticker(id));
+    setSelectedIds([]);
+    setSelectMode(false);
+  };
+
   // Pack form
   const [packEditId, setPackEditId] = useState<string | null>(null);
   const [pName, setPName] = useState("");
@@ -67,7 +90,7 @@ const AdminPage = () => {
     if (url) {
       setImgBase64(url);
     } else {
-      alert("Image upload failed. Ensure you are logged in as admin and Cloudinary is configured.");
+      alert("Image upload failed.\n\nCheck that Cloudinary environment variables are set in your Render dashboard (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET).\n\nopen DevTools (F12 → Console) for the exact error.");
     }
   };
 
@@ -308,12 +331,72 @@ const AdminPage = () => {
                 </div>
               </div>
 
+              {/* Multi-select toolbar */}
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  onClick={toggleSelectMode}
+                  className={`px-3 py-1.5 text-[11px] rounded-lg border transition-colors ${
+                    selectMode
+                      ? "bg-destructive/10 text-destructive border-destructive/30"
+                      : "bg-muted text-foreground border-border"
+                  }`}
+                >
+                  {selectMode ? "✕ Cancel" : "⬜ Select"}
+                </button>
+
+                {selectMode && (
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        className="rounded accent-accent"
+                        checked={selectedIds.length === db.stickers.length && db.stickers.length > 0}
+                        onChange={() => {
+                          if (selectedIds.length === db.stickers.length) {
+                            setSelectedIds([]);
+                          } else {
+                            setSelectedIds(db.stickers.map((s) => s.id));
+                          }
+                        }}
+                      />
+                      All
+                    </label>
+                    <button
+                      onClick={handleBulkDelete}
+                      disabled={selectedIds.length === 0}
+                      className="px-3 py-1.5 text-[11px] rounded-lg bg-destructive text-white border border-destructive disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+                    >
+                      🗑 Delete {selectedIds.length > 0 ? `(${selectedIds.length})` : ""}
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {db.stickers.map((s) => (
-                <div key={s.id} className="flex items-center gap-2.5 py-2.5 border-b border-border">
-                  <div className="w-11 h-11 rounded-lg bg-muted flex items-center justify-center text-[22px] overflow-hidden shrink-0">
+                <div
+                  key={s.id}
+                  className={`flex items-center gap-2.5 py-2.5 border-b border-border transition-colors ${
+                    selectMode && selectedIds.includes(s.id) ? "bg-destructive/5 rounded-lg px-2" : ""
+                  }`}
+                >
+                  {selectMode && (
+                    <input
+                      type="checkbox"
+                      className="rounded accent-accent shrink-0 w-4 h-4 cursor-pointer"
+                      checked={selectedIds.includes(s.id)}
+                      onChange={() => toggleSelectId(s.id)}
+                    />
+                  )}
+                  <div
+                    className="w-11 h-11 rounded-lg bg-muted flex items-center justify-center text-[22px] overflow-hidden shrink-0 cursor-pointer"
+                    onClick={() => selectMode && toggleSelectId(s.id)}
+                  >
                     {s.img ? <img src={s.img} alt={s.name} className="w-full h-full object-cover" /> : s.emoji || "🌸"}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => selectMode && toggleSelectId(s.id)}
+                  >
                     <div className="text-[13px] font-medium">{s.name}</div>
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {(s.categories?.length ? s.categories : [s.category]).map((c) => (
@@ -322,10 +405,12 @@ const AdminPage = () => {
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">{s.price.toFixed(3)} TND</div>
                   </div>
-                  <div className="flex gap-1.5 shrink-0">
-                    <button onClick={() => startEdit(s.id)} className="px-2.5 py-1 text-[11px] rounded-lg bg-muted text-foreground border border-border">Edit</button>
-                    <button onClick={() => { if (confirm("Delete this sticker?")) deleteSticker(s.id); }} className="px-2.5 py-1 text-[11px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">Del</button>
-                  </div>
+                  {!selectMode && (
+                    <div className="flex gap-1.5 shrink-0">
+                      <button onClick={() => startEdit(s.id)} className="px-2.5 py-1 text-[11px] rounded-lg bg-muted text-foreground border border-border">Edit</button>
+                      <button onClick={() => { if (confirm("Delete this sticker?")) deleteSticker(s.id); }} className="px-2.5 py-1 text-[11px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">Del</button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

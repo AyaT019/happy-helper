@@ -14,7 +14,11 @@ import { router as packsRouter } from "./src/routes/packs.js";
 import { router as authRouter } from "./src/routes/auth.js";
 import { router as uploadRouter } from "./src/routes/upload.js";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load backend/.env even when command is run from repository root.
+dotenv.config({ path: path.join(__dirname, ".env") });
 
 // ── Mandatory env guards ──────────────────────────────────────────────────────
 if (!process.env.MONGODB_URI) {
@@ -82,9 +86,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/upload", uploadRouter);
 
 // ── Serve static frontend in production ──────────────────────────────────────
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 app.use(express.static(path.join(__dirname, "../dist")));
 app.get("*", (req, res, next) => {
   if (req.path.startsWith("/api")) return next();

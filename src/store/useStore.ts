@@ -90,6 +90,14 @@ const mapId = (arr: any[]) => arr.map(item => ({
   comments: item.comments ? item.comments.map((c: any) => ({...c, id: c._id})) : []
 }));
 
+const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Failed to read image file"));
+    reader.readAsDataURL(file);
+  });
+
 export function useStore() {
   const [db, setDb] = useState<DB>(defaultDB);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -167,9 +175,11 @@ export function useStore() {
 
   // Upload Method
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
+    if (!file.type?.startsWith("image/")) return null;
+
+    const formData = new FormData();
+    formData.append("image", file);
     try {
-      const formData = new FormData();
-      formData.append("image", file);
       const r = await fetch("/api/upload", {
         method: "POST",
         headers: { "Authorization": `Bearer ${localStorage.getItem(TOKEN_KEY)}` },
@@ -177,11 +187,14 @@ export function useStore() {
       });
       if (r.ok) {
         const data = await r.json();
-        return data.url;
+        return data.url ?? null;
       }
+      // Log the actual server error for debugging
+      const errBody = await r.json().catch(() => ({}));
+      console.error(`[uploadImage] Server error ${r.status}:`, errBody);
       return null;
     } catch (e) {
-      console.error(e);
+      console.error("[uploadImage] Network or unexpected error:", e);
       return null;
     }
   }, []);
