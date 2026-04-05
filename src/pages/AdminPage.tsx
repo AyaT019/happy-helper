@@ -43,8 +43,10 @@ const AdminPage = () => {
   const [sPrice, setSPrice] = useState("");
   const [sCats, setSCats] = useState<string[]>([]);
   const [imgBase64, setImgBase64] = useState("");
+  const [sBadge, setSBadge] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const excelRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const [newCat, setNewCat] = useState("");
   const [importMessage, setImportMessage] = useState("");
 
@@ -143,7 +145,7 @@ const AdminPage = () => {
   };
 
   const resetForm = () => {
-    setEditId(null); setSName(""); setSPrice(""); setSCats([]); setImgBase64("");
+    setEditId(null); setSName(""); setSPrice(""); setSCats([]); setImgBase64(""); setSBadge("");
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -152,10 +154,11 @@ const AdminPage = () => {
     const price = parseFloat(sPrice);
     if (!name || isNaN(price)) { alert("Please fill in name and price."); return; }
     const selectedCats = sCats.length ? sCats : ["General"];
+    const badge = sBadge.trim();
     if (editId !== null) {
-      updateSticker(editId, { name, price, category: selectedCats[0], categories: selectedCats, ...(imgBase64 ? { img: imgBase64 } : {}) });
+      updateSticker(editId, { name, price, category: selectedCats[0], categories: selectedCats, badge, ...(imgBase64 ? { img: imgBase64 } : {}) });
     } else {
-      addSticker({ name, price, category: selectedCats[0], categories: selectedCats, emoji: "🌸", img: imgBase64, badge: "" });
+      addSticker({ name, price, category: selectedCats[0], categories: selectedCats, emoji: "🌸", img: imgBase64, badge });
     }
     resetForm();
   };
@@ -163,7 +166,8 @@ const AdminPage = () => {
   const startEdit = (id: string) => {
     const s = db.stickers.find((x) => x.id === id);
     if (!s) return;
-    setEditId(id); setSName(s.name); setSPrice(String(s.price)); setSCats(s.categories?.length ? [...s.categories] : (s.category ? [s.category] : [])); setImgBase64(s.img || "");
+    setEditId(id); setSName(s.name); setSPrice(String(s.price)); setSCats(s.categories?.length ? [...s.categories] : (s.category ? [s.category] : [])); setImgBase64(s.img || ""); setSBadge(s.badge || "");
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
   const resetPackForm = () => {
@@ -284,7 +288,7 @@ const AdminPage = () => {
           {/* Stickers Tab */}
           {tab === "stickers" && (
             <div>
-              <div className="bg-card rounded-2xl p-4 mb-4">
+              <div ref={formRef} className="bg-card rounded-2xl p-4 mb-4">
                 <h3 className="text-sm font-medium mb-3.5">{editId !== null ? "Edit sticker" : "Add new sticker"}</h3>
                 <div className="mb-3">
                   <input ref={excelRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelImport} />
@@ -307,6 +311,20 @@ const AdminPage = () => {
                 <input value={sName} onChange={(e) => setSName(e.target.value)} placeholder="Sticker name" className={`${inputCls} mb-2.5`} />
                 <div className="mb-2.5">
                   <input value={sPrice} onChange={(e) => setSPrice(e.target.value)} type="number" placeholder="Price (TND)" step="0.1" min="0" className={inputCls} />
+                </div>
+                <div className="mb-2.5">
+                  <input
+                    value={sBadge}
+                    onChange={(e) => setSBadge(e.target.value)}
+                    placeholder="Badge label (e.g. ONE PIECE, NEW, HOT…)"
+                    className={inputCls}
+                  />
+                  {sBadge.trim() && (
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">Preview:</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-accent text-accent-foreground">{sBadge.trim()}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="mb-2.5">
                   <div className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Categories</div>
