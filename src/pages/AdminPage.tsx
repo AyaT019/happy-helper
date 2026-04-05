@@ -420,32 +420,113 @@ const AdminPage = () => {
           {tab === "orders" && (
             <div>
               {!db.orders.length ? (
-                <p className="text-muted-foreground text-[13px] py-4">No orders yet.</p>
+                <div className="text-center py-16">
+                  <div className="text-[48px] mb-3">📦</div>
+                  <p className="text-muted-foreground text-[13px]">No orders yet.</p>
+                </div>
               ) : (
-                db.orders.map((o) => (
-                  <div key={o.id} className="bg-card rounded-[14px] p-4 mb-2.5">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="text-xs text-muted-foreground">#{o.id} · {o.date}</div>
-                        <div className="text-sm font-medium">{o.name}</div>
-                        <div className="text-xs text-muted-foreground">📞 {o.phone}</div>
+                db.orders
+                  .slice()
+                  .sort((a, b) => (a.status === "pending" ? -1 : 1) - (b.status === "pending" ? -1 : 1))
+                  .map((o) => {
+                    const date = new Date(o.date);
+                    const displayDate = isNaN(date.getTime()) ? o.date : date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+                    return (
+                      <div key={o.id} className="bg-card rounded-2xl mb-3 overflow-hidden border border-border/60 shadow-sm">
+                        {/* Header bar */}
+                        <div className="flex justify-between items-center px-4 py-3 border-b border-border/40 bg-muted/30">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-accent/15 flex items-center justify-center text-sm font-display text-accent">
+                              {o.name?.[0]?.toUpperCase() ?? "?"}
+                            </div>
+                            <div>
+                              <div className="text-[13px] font-semibold leading-tight">{o.name}</div>
+                              <div className="text-[11px] text-muted-foreground flex items-center gap-1">📞 {o.phone}</div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider ${
+                              o.status === "done"
+                                ? "bg-green-100 text-green-800 border border-green-200"
+                                : "bg-amber-100 text-amber-800 border border-amber-200"
+                            }`}>
+                              {o.status === "done" ? "✓ Done" : "⏳ Pending"}
+                            </span>
+                            <div className="text-[10px] text-muted-foreground">{displayDate}</div>
+                          </div>
+                        </div>
+
+                        {/* Sticker image strip */}
+                        <div className="px-4 pt-3.5 pb-1">
+                          <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">
+                            Items ordered ({o.items.reduce((s, i) => s + i.qty, 0)} pcs)
+                          </div>
+                          <div className="flex flex-wrap gap-2.5">
+                            {o.items.map((item, idx) => {
+                              const matched = db.stickers.find(
+                                (s) => s.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+                              );
+                              return (
+                                <div key={idx} className="flex flex-col items-center gap-1">
+                                  <div className="relative">
+                                    <div className="w-[62px] h-[62px] rounded-xl bg-muted border border-border overflow-hidden flex items-center justify-center">
+                                      {matched?.img ? (
+                                        <img
+                                          src={matched.img}
+                                          alt={item.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <span className="text-2xl">{matched?.emoji ?? "🌸"}</span>
+                                      )}
+                                    </div>
+                                    {item.qty > 1 && (
+                                      <span className="absolute -top-1.5 -right-1.5 bg-accent text-accent-foreground text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow">
+                                        ×{item.qty}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[9px] text-muted-foreground text-center max-w-[62px] leading-tight truncate" title={item.name}>
+                                    {item.name}
+                                  </div>
+                                  <div className="text-[9px] font-medium text-accent">{item.price.toFixed(3)}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Notes */}
+                        {o.notes && (
+                          <div className="mx-4 mt-2 mb-0 bg-muted/50 border border-border/40 rounded-xl px-3 py-2 text-[11px] text-muted-foreground italic flex items-start gap-1.5">
+                            <span>💬</span>
+                            <span>"{o.notes}"</span>
+                          </div>
+                        )}
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between px-4 py-3 mt-1">
+                          <div className="font-display text-[17px] text-accent">{o.total.toFixed(3)} TND</div>
+                          <div className="flex gap-2">
+                            {o.status === "pending" && (
+                              <button
+                                onClick={() => markOrderDone(o.id)}
+                                className="px-3 py-1.5 text-[11px] rounded-lg bg-green-100 text-green-800 border border-green-200 font-medium hover:bg-green-200 transition-colors"
+                              >
+                                ✓ Mark as done
+                              </button>
+                            )}
+                            <button
+                              onClick={() => { if (confirm("Delete this order?")) deleteOrder(o.id); }}
+                              className="px-3 py-1.5 text-[11px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20 font-medium hover:bg-destructive/20 transition-colors"
+                            >
+                              🗑 Delete
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <span className={`text-[10px] px-2.5 py-0.5 rounded-lg font-medium uppercase tracking-wider ${o.status === "done" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                        {o.status}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground leading-relaxed">{o.items.map((i) => `${i.name} × ${i.qty}`).join(", ")}</div>
-                    {o.notes && <div className="text-xs text-muted-foreground mt-1 italic">"{o.notes}"</div>}
-                    <div className="font-display text-base text-accent mt-1.5">{o.total.toFixed(3)} TND</div>
-                    <div className="flex gap-2 mt-2.5">
-                      {o.status === "pending" && (
-                        <button onClick={() => markOrderDone(o.id)} className="px-2.5 py-1 text-[11px] rounded-lg bg-green-100 text-green-800 border border-green-200">Mark as done</button>
-                      )}
-                      <button onClick={() => { if (confirm("Delete this order?")) deleteOrder(o.id); }} className="px-2.5 py-1 text-[11px] rounded-lg bg-destructive/10 text-destructive border border-destructive/20">Delete</button>
-                    </div>
-                  </div>
-                ))
+                    );
+                  })
               )}
             </div>
           )}
