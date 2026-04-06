@@ -211,6 +211,8 @@ const AdminPage = () => {
   const resetPackForm = () => {
     setPackEditId(null); setPName(""); setPDesc(""); setPPrice(""); setPEmoji(""); setPImg(""); setPStickerIds([]); setPVisible(true); setPIsHero(false);
     if (packFileRef.current) packFileRef.current.value = "";
+    setImportedStickerIds([]); setImpName(""); setImpImg(""); setPackStickerTab("catalog");
+    if (impFileRef.current) impFileRef.current.value = "";
   };
 
   const handlePackSave = () => {
