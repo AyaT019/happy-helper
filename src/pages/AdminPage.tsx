@@ -85,6 +85,44 @@ const AdminPage = () => {
   const [pIsHero, setPIsHero] = useState(false);
   const packFileRef = useRef<HTMLInputElement>(null);
 
+  // Pack sticker import sub-tab
+  const [packStickerTab, setPackStickerTab] = useState<"catalog" | "import">("catalog");
+  const [importedStickerIds, setImportedStickerIds] = useState<string[]>([]);
+  const [impName, setImpName] = useState("");
+  const [impImg, setImpImg] = useState("");
+  const impFileRef = useRef<HTMLInputElement>(null);
+
+  const handleImpFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadImage(file);
+    if (url) {
+      setImpImg(url);
+    } else {
+      alert("Image upload failed.");
+    }
+  };
+
+  const handleAddImportedSticker = () => {
+    const n = impName.trim();
+    if (!n) { alert("Please enter a sticker name."); return; }
+    addSticker({ name: n, price: 0, category: "General", categories: ["General"], emoji: "🌸", img: impImg, badge: "" });
+    // Find the just-created sticker (last one with that name)
+    setTimeout(() => {
+      const latest = db.stickers.find((s) => s.name === n && !importedStickerIds.includes(s.id) && !pStickerIds.includes(s.id));
+      if (latest) {
+        setImportedStickerIds((prev) => [...prev, latest.id]);
+      }
+      setImpName("");
+      setImpImg("");
+      if (impFileRef.current) impFileRef.current.value = "";
+    }, 300);
+  };
+
+  const removeImportedSticker = (id: string) => {
+    setImportedStickerIds((prev) => prev.filter((x) => x !== id));
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -173,13 +211,16 @@ const AdminPage = () => {
   const resetPackForm = () => {
     setPackEditId(null); setPName(""); setPDesc(""); setPPrice(""); setPEmoji(""); setPImg(""); setPStickerIds([]); setPVisible(true); setPIsHero(false);
     if (packFileRef.current) packFileRef.current.value = "";
+    setImportedStickerIds([]); setImpName(""); setImpImg(""); setPackStickerTab("catalog");
+    if (impFileRef.current) impFileRef.current.value = "";
   };
 
   const handlePackSave = () => {
     const name = pName.trim();
     const price = parseFloat(pPrice);
     if (!name || isNaN(price)) { alert("Please fill in name and price."); return; }
-    const data = { name, description: pDesc.trim(), price, emoji: pEmoji || "📦", img: pImg, stickerIds: pStickerIds, visible: pVisible, isHero: pIsHero };
+    const mergedIds = [...new Set([...pStickerIds, ...importedStickerIds])];
+    const data = { name, description: pDesc.trim(), price, emoji: pEmoji || "📦", img: pImg, stickerIds: mergedIds, visible: pVisible, isHero: pIsHero };
     if (packEditId !== null) {
       updatePack(packEditId, data);
     } else {
@@ -621,22 +662,75 @@ const AdminPage = () => {
                   <input value={pEmoji} onChange={(e) => setPEmoji(e.target.value)} placeholder="Emoji icon" className={inputCls} />
                 </div>
 
-                {/* Sticker selection */}
+                {/* Sticker selection — two tabs */}
                 <div className="mb-3">
                   <div className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Select stickers</div>
-                  <div className="max-h-[150px] overflow-y-auto space-y-1.5 border border-border rounded-lg p-2">
-                    {db.stickers.map((s) => (
-                      <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs">
-                        <input
-                          type="checkbox"
-                          checked={pStickerIds.includes(s.id)}
-                          onChange={() => togglePackSticker(s.id)}
-                          className="rounded accent-accent"
-                        />
-                        <span>{s.emoji} {s.name}</span>
-                      </label>
-                    ))}
+                  <div className="flex border border-border rounded-lg overflow-hidden mb-2">
+                    <button
+                      onClick={() => setPackStickerTab("catalog")}
+                      className={`flex-1 py-2 text-[11px] font-medium ${packStickerTab === "catalog" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                    >
+                      From catalog
+                    </button>
+                    <button
+                      onClick={() => setPackStickerTab("import")}
+                      className={`flex-1 py-2 text-[11px] font-medium ${packStickerTab === "import" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                    >
+                      Import new
+                    </button>
                   </div>
+
+                  {packStickerTab === "catalog" ? (
+                    <div className="max-h-[150px] overflow-y-auto space-y-1.5 border border-border rounded-lg p-2">
+                      {db.stickers.map((s) => (
+                        <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs">
+                          <input
+                            type="checkbox"
+                            checked={pStickerIds.includes(s.id)}
+                            onChange={() => togglePackSticker(s.id)}
+                            className="rounded accent-accent"
+                          />
+                          <span>{s.emoji} {s.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div>
+                      {/* Imported sticker cards */}
+                      {importedStickerIds.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2.5">
+                          {importedStickerIds.map((id) => {
+                            const s = db.stickers.find((x) => x.id === id);
+                            if (!s) return null;
+                            return (
+                              <div key={id} className="flex items-center gap-2 bg-muted rounded-lg px-2.5 py-1.5 text-xs">
+                                <div className="w-8 h-8 rounded bg-muted-foreground/10 overflow-hidden flex items-center justify-center shrink-0">
+                                  {s.img ? <img src={s.img} className="w-full h-full object-cover" /> : <span className="text-lg">{s.emoji}</span>}
+                                </div>
+                                <span className="font-medium max-w-[80px] truncate">{s.name}</span>
+                                <button onClick={() => removeImportedSticker(id)} className="text-destructive text-sm ml-1 hover:text-destructive/80">×</button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Import form */}
+                      <div className="border border-border rounded-lg p-2.5 space-y-2">
+                        <div
+                          onClick={() => impFileRef.current?.click()}
+                          className="w-full h-[70px] bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer border border-dashed border-border"
+                        >
+                          {impImg ? <img src={impImg} className="w-full h-full object-cover rounded-lg" /> : <span className="text-[11px] text-muted-foreground">+ Upload image</span>}
+                        </div>
+                        <input ref={impFileRef} type="file" accept="image/*" className="hidden" onChange={handleImpFileChange} />
+                        <input value={impName} onChange={(e) => setImpName(e.target.value)} placeholder="Sticker name" className={inputCls} />
+                        <button onClick={handleAddImportedSticker} className="w-full bg-accent text-accent-foreground py-2 rounded-lg text-[12px] font-medium">
+                          + Add to pack
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Toggles */}
