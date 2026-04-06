@@ -662,22 +662,75 @@ const AdminPage = () => {
                   <input value={pEmoji} onChange={(e) => setPEmoji(e.target.value)} placeholder="Emoji icon" className={inputCls} />
                 </div>
 
-                {/* Sticker selection */}
+                {/* Sticker selection — two tabs */}
                 <div className="mb-3">
                   <div className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Select stickers</div>
-                  <div className="max-h-[150px] overflow-y-auto space-y-1.5 border border-border rounded-lg p-2">
-                    {db.stickers.map((s) => (
-                      <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs">
-                        <input
-                          type="checkbox"
-                          checked={pStickerIds.includes(s.id)}
-                          onChange={() => togglePackSticker(s.id)}
-                          className="rounded accent-accent"
-                        />
-                        <span>{s.emoji} {s.name}</span>
-                      </label>
-                    ))}
+                  <div className="flex border border-border rounded-lg overflow-hidden mb-2">
+                    <button
+                      onClick={() => setPackStickerTab("catalog")}
+                      className={`flex-1 py-2 text-[11px] font-medium ${packStickerTab === "catalog" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                    >
+                      From catalog
+                    </button>
+                    <button
+                      onClick={() => setPackStickerTab("import")}
+                      className={`flex-1 py-2 text-[11px] font-medium ${packStickerTab === "import" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                    >
+                      Import new
+                    </button>
                   </div>
+
+                  {packStickerTab === "catalog" ? (
+                    <div className="max-h-[150px] overflow-y-auto space-y-1.5 border border-border rounded-lg p-2">
+                      {db.stickers.map((s) => (
+                        <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs">
+                          <input
+                            type="checkbox"
+                            checked={pStickerIds.includes(s.id)}
+                            onChange={() => togglePackSticker(s.id)}
+                            className="rounded accent-accent"
+                          />
+                          <span>{s.emoji} {s.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div>
+                      {/* Imported sticker cards */}
+                      {importedStickerIds.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2.5">
+                          {importedStickerIds.map((id) => {
+                            const s = db.stickers.find((x) => x.id === id);
+                            if (!s) return null;
+                            return (
+                              <div key={id} className="flex items-center gap-2 bg-muted rounded-lg px-2.5 py-1.5 text-xs">
+                                <div className="w-8 h-8 rounded bg-muted-foreground/10 overflow-hidden flex items-center justify-center shrink-0">
+                                  {s.img ? <img src={s.img} className="w-full h-full object-cover" /> : <span className="text-lg">{s.emoji}</span>}
+                                </div>
+                                <span className="font-medium max-w-[80px] truncate">{s.name}</span>
+                                <button onClick={() => removeImportedSticker(id)} className="text-destructive text-sm ml-1 hover:text-destructive/80">×</button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Import form */}
+                      <div className="border border-border rounded-lg p-2.5 space-y-2">
+                        <div
+                          onClick={() => impFileRef.current?.click()}
+                          className="w-full h-[70px] bg-muted rounded-lg flex items-center justify-center overflow-hidden cursor-pointer border border-dashed border-border"
+                        >
+                          {impImg ? <img src={impImg} className="w-full h-full object-cover rounded-lg" /> : <span className="text-[11px] text-muted-foreground">+ Upload image</span>}
+                        </div>
+                        <input ref={impFileRef} type="file" accept="image/*" className="hidden" onChange={handleImpFileChange} />
+                        <input value={impName} onChange={(e) => setImpName(e.target.value)} placeholder="Sticker name" className={inputCls} />
+                        <button onClick={handleAddImportedSticker} className="w-full bg-accent text-accent-foreground py-2 rounded-lg text-[12px] font-medium">
+                          + Add to pack
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Toggles */}
