@@ -85,6 +85,44 @@ const AdminPage = () => {
   const [pIsHero, setPIsHero] = useState(false);
   const packFileRef = useRef<HTMLInputElement>(null);
 
+  // Pack sticker import sub-tab
+  const [packStickerTab, setPackStickerTab] = useState<"catalog" | "import">("catalog");
+  const [importedStickerIds, setImportedStickerIds] = useState<string[]>([]);
+  const [impName, setImpName] = useState("");
+  const [impImg, setImpImg] = useState("");
+  const impFileRef = useRef<HTMLInputElement>(null);
+
+  const handleImpFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadImage(file);
+    if (url) {
+      setImpImg(url);
+    } else {
+      alert("Image upload failed.");
+    }
+  };
+
+  const handleAddImportedSticker = () => {
+    const n = impName.trim();
+    if (!n) { alert("Please enter a sticker name."); return; }
+    addSticker({ name: n, price: 0, category: "General", categories: ["General"], emoji: "🌸", img: impImg, badge: "" });
+    // Find the just-created sticker (last one with that name)
+    setTimeout(() => {
+      const latest = db.stickers.find((s) => s.name === n && !importedStickerIds.includes(s.id) && !pStickerIds.includes(s.id));
+      if (latest) {
+        setImportedStickerIds((prev) => [...prev, latest.id]);
+      }
+      setImpName("");
+      setImpImg("");
+      if (impFileRef.current) impFileRef.current.value = "";
+    }, 300);
+  };
+
+  const removeImportedSticker = (id: string) => {
+    setImportedStickerIds((prev) => prev.filter((x) => x !== id));
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
