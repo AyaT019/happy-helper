@@ -219,7 +219,8 @@ const AdminPage = () => {
     const name = pName.trim();
     const price = parseFloat(pPrice);
     if (!name || isNaN(price)) { alert("Please fill in name and price."); return; }
-    const data = { name, description: pDesc.trim(), price, emoji: pEmoji || "📦", img: pImg, stickerIds: pStickerIds, visible: pVisible, isHero: pIsHero };
+    const mergedIds = [...new Set([...pStickerIds, ...importedStickerIds])];
+    const data = { name, description: pDesc.trim(), price, emoji: pEmoji || "📦", img: pImg, stickerIds: mergedIds, visible: pVisible, isHero: pIsHero };
     if (packEditId !== null) {
       updatePack(packEditId, data);
     } else {
