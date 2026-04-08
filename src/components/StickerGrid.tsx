@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search, Heart, MessageCircle } from "lucide-react";
 import { useAppStore } from "@/store/StoreContext";
 import { Sticker } from "@/store/useStore";
@@ -14,7 +14,19 @@ const StickerGrid = () => {
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
 
   const cats = ["All", ...db.categories.filter((c) => c !== "All")];
-  const byCategory = filter === "All" ? db.stickers : db.stickers.filter((s) => s.categories?.includes(filter) || s.category === filter);
+  // Shuffle stickers so new ones are mixed in, not always at the end
+  const shuffled = useMemo(() => {
+    const arr = [...db.stickers];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+    // Re-shuffle only when the sticker list itself changes (added/removed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db.stickers.length]);
+
+  const byCategory = filter === "All" ? shuffled : shuffled.filter((s) => s.categories?.includes(filter) || s.category === filter);
   const filtered = search.trim()
     ? byCategory.filter((s) => s.name.toLowerCase().includes(search.trim().toLowerCase()))
     : byCategory;
