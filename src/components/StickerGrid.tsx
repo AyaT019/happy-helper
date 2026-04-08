@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search, Heart, MessageCircle } from "lucide-react";
 import { useAppStore } from "@/store/StoreContext";
 import { Sticker } from "@/store/useStore";
