@@ -102,7 +102,7 @@ const PackModal = ({ pack, onClose }: Props) => {
           </div>
 
           {/* Description & price */}
-          <div className="px-4 py-3 border-b border-border/60">
+          <div className="px-4 py-3 border-b border-border/60 sticky top-0 z-10 bg-card">
             {pack.description && (
               <p className="text-xs text-muted-foreground leading-relaxed mb-2">{pack.description}</p>
             )}
