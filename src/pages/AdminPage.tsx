@@ -303,7 +303,7 @@ const AdminPage = () => {
               { label: "Total orders", value: totalOrders, color: "" },
               { label: "Pending", value: pendingOrders, color: "text-yellow-700" },
               { label: "Revenue (done)", value: revenue.toFixed(3), color: "text-accent" },
-              { label: "Stickers", value: db.stickers.length, color: "" },
+              { label: "Stickers", value: db.stickers.filter((s) => !s.packOnly).length, color: "" },
             ].map((s) => (
               <div key={s.label} className="bg-card rounded-xl px-4 py-3.5">
                 <div className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">{s.label}</div>
@@ -409,12 +409,13 @@ const AdminPage = () => {
                       <input
                         type="checkbox"
                         className="rounded accent-accent"
-                        checked={selectedIds.length === db.stickers.length && db.stickers.length > 0}
+                        checked={selectedIds.length === db.stickers.filter((s) => !s.packOnly).length && db.stickers.filter((s) => !s.packOnly).length > 0}
                         onChange={() => {
-                          if (selectedIds.length === db.stickers.length) {
+                          const visible = db.stickers.filter((s) => !s.packOnly);
+                          if (selectedIds.length === visible.length) {
                             setSelectedIds([]);
                           } else {
-                            setSelectedIds(db.stickers.map((s) => s.id));
+                            setSelectedIds(visible.map((s) => s.id));
                           }
                         }}
                       />
