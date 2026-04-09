@@ -18,6 +18,7 @@ export interface Sticker {
   emoji: string;
   img: string;
   badge: string;
+  packOnly?: boolean;
   reactions?: Record<ReactionType, number>;
   comments?: Comment[];
 }

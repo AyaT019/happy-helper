@@ -106,7 +106,7 @@ const AdminPage = () => {
   const handleAddImportedSticker = () => {
     const n = impName.trim();
     if (!n) { alert("Please enter a sticker name."); return; }
-    addSticker({ name: n, price: 0, category: "General", categories: ["General"], emoji: "🌸", img: impImg, badge: "" });
+    addSticker({ name: n, price: 0, category: "General", categories: ["General"], emoji: "🌸", img: impImg, badge: "", packOnly: true });
     // Find the just-created sticker (last one with that name)
     setTimeout(() => {
       const latest = db.stickers.find((s) => s.name === n && !importedStickerIds.includes(s.id) && !pStickerIds.includes(s.id));
@@ -303,7 +303,7 @@ const AdminPage = () => {
               { label: "Total orders", value: totalOrders, color: "" },
               { label: "Pending", value: pendingOrders, color: "text-yellow-700" },
               { label: "Revenue (done)", value: revenue.toFixed(3), color: "text-accent" },
-              { label: "Stickers", value: db.stickers.length, color: "" },
+              { label: "Stickers", value: db.stickers.filter((s) => !s.packOnly).length, color: "" },
             ].map((s) => (
               <div key={s.label} className="bg-card rounded-xl px-4 py-3.5">
                 <div className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">{s.label}</div>
@@ -409,12 +409,13 @@ const AdminPage = () => {
                       <input
                         type="checkbox"
                         className="rounded accent-accent"
-                        checked={selectedIds.length === db.stickers.length && db.stickers.length > 0}
+                        checked={selectedIds.length === db.stickers.filter((s) => !s.packOnly).length && db.stickers.filter((s) => !s.packOnly).length > 0}
                         onChange={() => {
-                          if (selectedIds.length === db.stickers.length) {
+                          const visible = db.stickers.filter((s) => !s.packOnly);
+                          if (selectedIds.length === visible.length) {
                             setSelectedIds([]);
                           } else {
-                            setSelectedIds(db.stickers.map((s) => s.id));
+                            setSelectedIds(visible.map((s) => s.id));
                           }
                         }}
                       />
@@ -431,7 +432,7 @@ const AdminPage = () => {
                 )}
               </div>
 
-              {db.stickers.map((s) => (
+              {db.stickers.filter((s) => !s.packOnly).map((s) => (
                 <div
                   key={s.id}
                   className={`flex items-center gap-2.5 py-2.5 border-b border-border transition-colors ${
@@ -621,7 +622,7 @@ const AdminPage = () => {
                 </div>
               ) : (
                 cats.map((c) => {
-                  const count = db.stickers.filter((s) => s.categories?.includes(c) || s.category === c).length;
+                  const count = db.stickers.filter((s) => !s.packOnly && (s.categories?.includes(c) || s.category === c)).length;
                   return (
                     <div key={c} className="flex items-center justify-between bg-card rounded-xl px-3.5 py-3 mb-2">
                       <div className="flex items-center gap-3">

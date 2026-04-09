@@ -27,6 +27,7 @@ const StickerSchema = new mongoose.Schema(
     emoji: { type: String, default: "🌸" },
     img: { type: String, default: "" }, // base64 or URL
     badge: { type: String, default: "" },
+    packOnly: { type: Boolean, default: false },
     reactions: { type: ReactionsSchema, default: () => ({}) },
     comments: { type: [CommentSchema], default: [] },
   },
