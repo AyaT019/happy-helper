@@ -17,12 +17,12 @@ router.get("/", async (req, res, next) => {
 // Create sticker (admin)
 router.post("/", requireAdmin, async (req, res, next) => {
   try {
-    const { name, price, category, categories, emoji, img, badge } = req.body;
+    const { name, price, category, categories, emoji, img, badge, packOnly } = req.body;
     if (!name || typeof price !== "number") {
       return res.status(400).json({ error: "name and price are required" });
     }
     const cats = Array.isArray(categories) && categories.length > 0 ? categories : (category ? [category] : ["General"]);
-    const sticker = await Sticker.create({ name, price, category: cats[0] || "General", categories: cats, emoji, img, badge });
+    const sticker = await Sticker.create({ name, price, category: cats[0] || "General", categories: cats, emoji, img, badge, packOnly: !!packOnly });
     res.status(201).json(sticker);
   } catch (err) {
     next(err);
