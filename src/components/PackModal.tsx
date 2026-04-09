@@ -72,9 +72,6 @@ const PackModal = ({ pack, onClose }: Props) => {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border/60">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center text-xl">
-                {pack.emoji || "📦"}
-              </div>
               <div>
                 <div className="font-medium text-sm">{pack.name}</div>
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
@@ -89,10 +86,8 @@ const PackModal = ({ pack, onClose }: Props) => {
 
           {/* Pack image / emoji display */}
           <div className="h-[160px] flex items-center justify-center bg-muted/30 relative overflow-hidden">
-            {pack.img ? (
+            {pack.img && (
               <img src={pack.img} alt={pack.name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-[72px]">{pack.emoji || "📦"}</span>
             )}
             {pack.isHero && (
               <div className="absolute top-3 left-3 bg-accent text-accent-foreground text-[9px] tracking-[0.1em] uppercase px-2.5 py-0.5 rounded-full font-medium shadow-soft">
