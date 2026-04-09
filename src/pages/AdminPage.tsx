@@ -106,7 +106,7 @@ const AdminPage = () => {
   const handleAddImportedSticker = () => {
     const n = impName.trim();
     if (!n) { alert("Please enter a sticker name."); return; }
-    addSticker({ name: n, price: 0, category: "General", categories: ["General"], emoji: "🌸", img: impImg, badge: "" });
+    addSticker({ name: n, price: 0, category: "General", categories: ["General"], emoji: "🌸", img: impImg, badge: "", packOnly: true });
     // Find the just-created sticker (last one with that name)
     setTimeout(() => {
       const latest = db.stickers.find((s) => s.name === n && !importedStickerIds.includes(s.id) && !pStickerIds.includes(s.id));
