@@ -232,7 +232,7 @@ const AdminPage = () => {
   const startPackEdit = (id: string) => {
     const p = db.packs.find((x) => x.id === id);
     if (!p) return;
-    setPackEditId(id); setPName(p.name); setPDesc(p.description); setPPrice(String(p.price)); setPEmoji(p.emoji); setPImg(p.img); setPStickerIds([...p.stickerIds]); setPVisible(p.visible); setPIsHero(p.isHero);
+    setPackEditId(id); setPName(p.name); setPDesc(p.description); setPPrice(String(p.price)); setPEmoji(""); setPImg(p.img); setPStickerIds([...p.stickerIds]); setPVisible(p.visible); setPIsHero(p.isHero);
   };
 
   const togglePackSticker = (sid: string) => {
