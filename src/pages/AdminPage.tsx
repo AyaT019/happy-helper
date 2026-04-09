@@ -220,7 +220,7 @@ const AdminPage = () => {
     const price = parseFloat(pPrice);
     if (!name || isNaN(price)) { alert("Please fill in name and price."); return; }
     const mergedIds = [...new Set([...pStickerIds, ...importedStickerIds])];
-    const data = { name, description: pDesc.trim(), price, emoji: pEmoji || "📦", img: pImg, stickerIds: mergedIds, visible: pVisible, isHero: pIsHero };
+    const data = { name, description: pDesc.trim(), price, img: pImg, stickerIds: mergedIds, visible: pVisible, isHero: pIsHero };
     if (packEditId !== null) {
       updatePack(packEditId, data);
     } else {
@@ -660,7 +660,6 @@ const AdminPage = () => {
                 <textarea value={pDesc} onChange={(e) => setPDesc(e.target.value)} placeholder="Description" rows={2} className={`${inputCls} mb-2.5 resize-none`} />
                 <div className="grid grid-cols-2 gap-2.5 mb-2.5">
                   <input value={pPrice} onChange={(e) => setPPrice(e.target.value)} type="number" placeholder="Price (TND)" step="0.1" min="0" className={inputCls} />
-                  <input value={pEmoji} onChange={(e) => setPEmoji(e.target.value)} placeholder="Emoji icon" className={inputCls} />
                 </div>
 
                 {/* Sticker selection — two tabs */}
@@ -756,7 +755,7 @@ const AdminPage = () => {
               {db.packs.map((p) => (
                 <div key={p.id} className="flex items-center gap-2.5 py-2.5 border-b border-border">
                   <div className="w-11 h-11 rounded-lg bg-muted flex items-center justify-center text-[22px] overflow-hidden shrink-0">
-                    {p.img ? <img src={p.img} alt={p.name} className="w-full h-full object-cover" /> : p.emoji || "📦"}
+                    {p.img ? <img src={p.img} alt={p.name} className="w-full h-full object-cover" /> : null}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium flex items-center gap-1.5">

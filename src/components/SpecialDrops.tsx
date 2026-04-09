@@ -39,11 +39,7 @@ const SpecialDrops = () => {
           >
             {heroPack.img ? (
               <img src={heroPack.img} alt={heroPack.name} className="absolute inset-0 w-full h-full object-cover opacity-30" />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center opacity-10 text-[120px]">
-                {heroPack.emoji || "✨"}
-              </div>
-            )}
+            ) : null}
             <div className="relative z-10 p-6">
               <div className="text-[10px] tracking-[0.15em] uppercase opacity-60 mb-2">Featured pack</div>
               <h3 className="font-display text-[28px] leading-tight mb-1.5">{heroPack.name}</h3>
@@ -78,9 +74,7 @@ const SpecialDrops = () => {
               <div className="h-[80px] bg-muted/50 flex items-center justify-center overflow-hidden relative">
                 {pack.img ? (
                   <img src={pack.img} alt={pack.name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-[40px]">{pack.emoji || "📦"}</span>
-                )}
+                ) : null}
               </div>
               <div className="p-3">
                 <div className="text-[13px] font-medium leading-tight">{pack.name}</div>
