@@ -166,7 +166,7 @@ const PackModal = ({ pack, onClose }: Props) => {
           </div>
 
           {/* Comments */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 max-h-[200px]">
+          <div className="px-4 py-3 space-y-3 min-h-0">
             {comments.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-4">No comments yet. Be the first! 💬</p>
             ) : (
