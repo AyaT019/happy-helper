@@ -67,7 +67,7 @@ const PackModal = ({ pack, onClose }: Props) => {
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-card w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-elevated"
+          className="bg-card w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] flex flex-col overflow-y-auto shadow-elevated"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border/60">
