@@ -32,7 +32,6 @@ export interface Pack {
   name: string;
   description: string;
   price: number;
-  emoji: string;
   img: string;
   stickerIds: string[];
   visible: boolean;
