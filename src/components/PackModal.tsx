@@ -67,7 +67,7 @@ const PackModal = ({ pack, onClose }: Props) => {
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 300 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-card w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-elevated"
+          className="bg-card w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] flex flex-col overflow-y-auto shadow-elevated"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border/60">
@@ -102,7 +102,7 @@ const PackModal = ({ pack, onClose }: Props) => {
           </div>
 
           {/* Description & price */}
-          <div className="px-4 py-3 border-b border-border/60">
+          <div className="px-4 py-3 border-b border-border/60 sticky top-0 z-10 bg-card">
             {pack.description && (
               <p className="text-xs text-muted-foreground leading-relaxed mb-2">{pack.description}</p>
             )}
@@ -166,7 +166,7 @@ const PackModal = ({ pack, onClose }: Props) => {
           </div>
 
           {/* Comments */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0 max-h-[200px]">
+          <div className="px-4 py-3 space-y-3 min-h-0">
             {comments.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-4">No comments yet. Be the first! 💬</p>
             ) : (
