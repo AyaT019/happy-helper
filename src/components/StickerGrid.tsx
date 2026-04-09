@@ -16,13 +16,12 @@ const StickerGrid = () => {
   const cats = ["All", ...db.categories.filter((c) => c !== "All")];
   // Shuffle stickers so new ones are mixed in, not always at the end
   const shuffled = useMemo(() => {
-    const arr = [...db.stickers];
+    const arr = [...db.stickers].filter((s) => !s.packOnly);
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
-    // Re-shuffle only when the sticker list itself changes (added/removed)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [db.stickers.length]);
 

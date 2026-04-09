@@ -431,7 +431,7 @@ const AdminPage = () => {
                 )}
               </div>
 
-              {db.stickers.map((s) => (
+              {db.stickers.filter((s) => !s.packOnly).map((s) => (
                 <div
                   key={s.id}
                   className={`flex items-center gap-2.5 py-2.5 border-b border-border transition-colors ${
@@ -621,7 +621,7 @@ const AdminPage = () => {
                 </div>
               ) : (
                 cats.map((c) => {
-                  const count = db.stickers.filter((s) => s.categories?.includes(c) || s.category === c).length;
+                  const count = db.stickers.filter((s) => !s.packOnly && (s.categories?.includes(c) || s.category === c)).length;
                   return (
                     <div key={c} className="flex items-center justify-between bg-card rounded-xl px-3.5 py-3 mb-2">
                       <div className="flex items-center gap-3">
