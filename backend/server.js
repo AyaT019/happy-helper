@@ -7,18 +7,18 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load backend/.env BEFORE any imports that depend on env vars
+dotenv.config({ path: path.join(__dirname, ".env") });
+
 import { router as stickersRouter } from "./src/routes/stickers.js";
 import { router as ordersRouter } from "./src/routes/orders.js";
 import { router as categoriesRouter } from "./src/routes/categories.js";
 import { router as packsRouter } from "./src/routes/packs.js";
 import { router as authRouter } from "./src/routes/auth.js";
 import { router as uploadRouter } from "./src/routes/upload.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load backend/.env even when command is run from repository root.
-dotenv.config({ path: path.join(__dirname, ".env") });
 
 // ── Mandatory env guards ──────────────────────────────────────────────────────
 if (!process.env.MONGODB_URI) {
