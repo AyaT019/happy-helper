@@ -47,21 +47,20 @@ const SpecialDrops = () => {
                 <img
                   src={heroPack.img}
                   alt={heroPack.name}
-                  className="w-full block"
-                  style={{ height: 200, objectFit: 'cover', borderRadius: '20px 20px 0 0' }}
+                  style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block' }}
                 />
-                <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c17f3a', marginBottom: 6 }}>
+                <div style={{ padding: '14px 16px' }}>
+                  <p style={{ fontSize: '8px', letterSpacing: '.18em', textTransform: 'uppercase', color: '#c17f3a', marginBottom: '6px' }}>
                     ✦ Limited drop
-                  </div>
-                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontStyle: 'italic', color: '#2a2318', marginBottom: 4, lineHeight: 1.2 }}>
+                  </p>
+                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '20px', fontStyle: 'italic', color: '#2a2318', marginBottom: '4px', lineHeight: 1.2 }}>
                     {heroPack.name}
                   </h3>
-                  <p style={{ fontSize: 11, color: '#8a7a65', lineHeight: 1.5, marginBottom: 12 }}>
+                  <p style={{ fontSize: '11px', color: '#8a7a65', marginBottom: '12px', lineHeight: 1.5 }}>
                     {heroPack.description}
                   </p>
-                  <div className="flex items-center justify-between">
-                    <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: '#c17f3a' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '18px', color: '#c17f3a' }}>
                       {heroPack.price.toFixed(3)} TND
                     </span>
                     <button
