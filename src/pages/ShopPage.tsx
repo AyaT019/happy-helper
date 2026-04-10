@@ -2,7 +2,6 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import StickerGrid from "@/components/StickerGrid";
-import SpecialDrops from "@/components/SpecialDrops";
 import StaffPicks from "@/components/StaffPicks";
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
@@ -24,7 +23,6 @@ const ShopPage = () => {
       <Navbar onCartOpen={() => setCartOpen(true)} />
       <Hero />
       <StickerGrid />
-      <SpecialDrops />
       <StaffPicks />
       <div className="h-4" />
       <Footer />
