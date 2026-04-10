@@ -34,27 +34,71 @@ const SpecialDrops = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="relative rounded-2xl overflow-hidden bg-primary text-primary-foreground shadow-elevated cursor-pointer"
+            className="overflow-hidden cursor-pointer"
+            style={{
+              borderRadius: 20,
+              background: heroPack.img ? '#f5f0e8' : 'hsl(var(--primary))',
+              border: heroPack.img ? '0.5px solid #c4b89a' : 'none',
+            }}
             onClick={() => setSelectedPack(heroPack)}
           >
             {heroPack.img ? (
-              <img src={heroPack.img} alt={heroPack.name} className="absolute inset-0 w-full h-full object-cover opacity-30" />
-            ) : null}
-            <div className="relative z-10 p-6">
-              <div className="text-[10px] tracking-[0.15em] uppercase opacity-60 mb-2">Featured pack</div>
-              <h3 className="font-display text-[28px] leading-tight mb-1.5">{heroPack.name}</h3>
-              <p className="text-sm opacity-70 leading-relaxed mb-4 max-w-[280px]">{heroPack.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="font-display text-xl">{heroPack.price.toFixed(3)} TND</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); addPackToCart(heroPack.id); }}
-                  className="bg-accent text-accent-foreground px-5 py-2.5 rounded-full text-xs font-medium shadow-soft hover:shadow-elevated active:scale-[0.97] transition-all"
-                >
-                  Add to cart
-                </button>
+              <>
+                <img
+                  src={heroPack.img}
+                  alt={heroPack.name}
+                  className="w-full block"
+                  style={{ height: 200, objectFit: 'cover', borderRadius: '20px 20px 0 0' }}
+                />
+                <div style={{ padding: 16 }}>
+                  <div style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c17f3a', marginBottom: 6 }}>
+                    ✦ Limited drop
+                  </div>
+                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontStyle: 'italic', color: '#2a2318', marginBottom: 4, lineHeight: 1.2 }}>
+                    {heroPack.name}
+                  </h3>
+                  <p style={{ fontSize: 11, color: '#8a7a65', lineHeight: 1.5, marginBottom: 12 }}>
+                    {heroPack.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: '#c17f3a' }}>
+                      {heroPack.price.toFixed(3)} TND
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); addPackToCart(heroPack.id); }}
+                      style={{
+                        background: '#c17f3a',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 20,
+                        padding: '8px 18px',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Add to cart →
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="relative z-10 p-6 text-primary-foreground">
+                <div className="text-[10px] tracking-[0.15em] uppercase opacity-60 mb-2">Featured pack</div>
+                <h3 className="font-display text-[28px] leading-tight mb-1.5">{heroPack.name}</h3>
+                <p className="text-sm opacity-70 leading-relaxed mb-4 max-w-[280px]">{heroPack.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-xl">{heroPack.price.toFixed(3)} TND</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); addPackToCart(heroPack.id); }}
+                    className="bg-accent text-accent-foreground px-5 py-2.5 rounded-full text-xs font-medium shadow-soft hover:shadow-elevated active:scale-[0.97] transition-all"
+                  >
+                    Add to cart
+                  </button>
+                </div>
+                <div className="text-[10px] opacity-50 mt-2">{heroPack.stickerIds.length} sticker{heroPack.stickerIds.length !== 1 ? "s" : ""} included</div>
               </div>
-              <div className="text-[10px] opacity-50 mt-2">{heroPack.stickerIds.length} sticker{heroPack.stickerIds.length !== 1 ? "s" : ""} included</div>
-            </div>
+            )}
           </motion.div>
         </div>
       )}
