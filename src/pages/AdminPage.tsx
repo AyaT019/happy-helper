@@ -121,6 +121,11 @@ const AdminPage = () => {
 
   const removeImportedSticker = (id: string) => {
     setImportedStickerIds((prev) => prev.filter((x) => x !== id));
+    // Also delete packOnly stickers from the database entirely
+    const s = db.stickers.find((x) => x.id === id);
+    if (s?.packOnly) {
+      deleteSticker(id);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,7 +237,20 @@ const AdminPage = () => {
   const startPackEdit = (id: string) => {
     const p = db.packs.find((x) => x.id === id);
     if (!p) return;
-    setPackEditId(id); setPName(p.name); setPDesc(p.description); setPPrice(String(p.price)); setPEmoji(""); setPImg(p.img); setPStickerIds([...p.stickerIds]); setPVisible(p.visible); setPIsHero(p.isHero);
+    // Separate catalog stickers from pack-exclusive ones
+    const catalogIds: string[] = [];
+    const exclusiveIds: string[] = [];
+    p.stickerIds.forEach((sid) => {
+      const s = db.stickers.find((x) => x.id === sid);
+      if (s?.packOnly) {
+        exclusiveIds.push(sid);
+      } else {
+        catalogIds.push(sid);
+      }
+    });
+    setPackEditId(id); setPName(p.name); setPDesc(p.description); setPPrice(String(p.price)); setPEmoji(""); setPImg(p.img); setPStickerIds(catalogIds); setPVisible(p.visible); setPIsHero(p.isHero);
+    setImportedStickerIds(exclusiveIds);
+    setPackStickerTab("catalog");
   };
 
   const togglePackSticker = (sid: string) => {
@@ -681,18 +699,45 @@ const AdminPage = () => {
                   </div>
 
                   {packStickerTab === "catalog" ? (
-                    <div className="max-h-[150px] overflow-y-auto space-y-1.5 border border-border rounded-lg p-2">
-                      {db.stickers.map((s) => (
-                        <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs">
-                          <input
-                            type="checkbox"
-                            checked={pStickerIds.includes(s.id)}
-                            onChange={() => togglePackSticker(s.id)}
-                            className="rounded accent-accent"
-                          />
-                          <span>{s.emoji} {s.name}</span>
-                        </label>
-                      ))}
+                    <div>
+                      <div className="max-h-[150px] overflow-y-auto space-y-1.5 border border-border rounded-lg p-2">
+                        {db.stickers.filter((s) => !s.packOnly).map((s) => (
+                          <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs">
+                            <input
+                              type="checkbox"
+                              checked={pStickerIds.includes(s.id)}
+                              onChange={() => togglePackSticker(s.id)}
+                              className="rounded accent-accent"
+                            />
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              {s.img && <img src={s.img} className="w-6 h-6 rounded object-cover shrink-0" />}
+                              <span className="truncate">{s.name}</span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Pack-exclusive stickers (packOnly) */}
+                      {importedStickerIds.length > 0 && (
+                        <div className="mt-2.5">
+                          <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 font-medium">Pack-exclusive stickers</div>
+                          <div className="flex flex-wrap gap-2">
+                            {importedStickerIds.map((id) => {
+                              const s = db.stickers.find((x) => x.id === id);
+                              if (!s) return null;
+                              return (
+                                <div key={id} className="flex items-center gap-2 bg-muted rounded-lg px-2.5 py-1.5 text-xs">
+                                  <div className="w-8 h-8 rounded bg-muted-foreground/10 overflow-hidden flex items-center justify-center shrink-0">
+                                    {s.img ? <img src={s.img} className="w-full h-full object-cover" /> : <span className="text-lg">{s.emoji}</span>}
+                                  </div>
+                                  <span className="font-medium max-w-[80px] truncate">{s.name}</span>
+                                  <button onClick={() => removeImportedSticker(id)} className="text-destructive text-sm ml-1 hover:text-destructive/80">×</button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div>
