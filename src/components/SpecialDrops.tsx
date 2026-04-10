@@ -47,7 +47,7 @@ const SpecialDrops = () => {
                 <img
                   src={heroPack.img}
                   alt={heroPack.name}
-                  style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block' }}
+                  style={{ width: '100%', height: 'auto', display: 'block' }}
                 />
                 <div style={{ padding: '14px 16px' }}>
                   <p style={{ fontSize: '8px', letterSpacing: '.18em', textTransform: 'uppercase', color: '#c17f3a', marginBottom: '6px' }}>
