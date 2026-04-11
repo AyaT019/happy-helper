@@ -4,6 +4,7 @@ import { useAppStore } from "@/store/StoreContext";
 import { Sticker, Pack } from "@/store/useStore";
 import { motion } from "framer-motion";
 import StickerModal from "./StickerModal";
+import PackModal from "./PackModal";
 
 const EMOJI_HEIGHTS = [120, 160, 140, 180, 130, 150, 170, 145];
 
@@ -16,6 +17,7 @@ const StickerGrid = () => {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
+  const [selectedPack, setSelectedPack] = useState<Pack | null>(null);
 
   const cats = ["All", ...db.categories.filter((c) => c !== "All")];
 
@@ -129,7 +131,8 @@ const StickerGrid = () => {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: i * 0.04 }}
-                    style={{ background: '#efe8d6', borderRadius: '16px', overflow: 'hidden', position: 'relative', breakInside: 'avoid', marginBottom: '8px' }}
+                    style={{ background: '#efe8d6', borderRadius: '16px', overflow: 'hidden', position: 'relative', breakInside: 'avoid', marginBottom: '8px', cursor: 'pointer' }}
+                    onClick={() => setSelectedPack(pack)}
                   >
                     <span style={{ position: 'absolute', top: '8px', left: '8px', background: '#2a2318', color: '#e8a955', fontSize: '8px', letterSpacing: '.1em', textTransform: 'uppercase', padding: '3px 7px', borderRadius: '8px', zIndex: 2 }}>Pack</span>
                     <img src={pack.img} alt={pack.name} style={{ width: '100%', height: 'auto', display: 'block' }} />
@@ -214,6 +217,14 @@ const StickerGrid = () => {
         <StickerModal
           sticker={db.stickers.find((s) => s.id === selectedSticker.id) || selectedSticker}
           onClose={() => setSelectedSticker(null)}
+        />
+      )}
+
+      {/* Pack detail modal */}
+      {selectedPack && (
+        <PackModal
+          pack={db.packs.find((p) => p.id === selectedPack.id) || selectedPack}
+          onClose={() => setSelectedPack(null)}
         />
       )}
     </div>
