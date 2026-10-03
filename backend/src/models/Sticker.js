@@ -34,5 +34,5 @@ const StickerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Sticker = mongoose.model("Sticker", StickerSchema);
+export const Sticker = mongoose.models.Sticker || mongoose.model("Sticker", StickerSchema);
 

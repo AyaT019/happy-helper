@@ -34,4 +34,4 @@ const PackSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Pack = mongoose.model("Pack", PackSchema);
+export const Pack = mongoose.models.Pack || mongoose.model("Pack", PackSchema);
