@@ -1,5 +1,5 @@
 import express from 'express';
-import { requireAdmin } from '../middleware/auth.js';
+import { requireAdmin } from '../middleware/auth.middleware.js';
 import { Sticker } from '../models/Sticker.js';
 
 const router = express.Router();
