@@ -49,8 +49,8 @@ app.use(
 // ── CORS — lock down to your deployed origin in production ────────────────────
 const allowedOrigins = isProduction
   ? [
-      process.env.FRONTEND_URL, // Set this in Render: https://your-app.onrender.com
-    ].filter(Boolean)
+    process.env.FRONTEND_URL, // Set this in Render: https://your-app.onrender.com
+  ].filter(Boolean)
   : ["http://localhost:8080", "http://localhost:3000", "http://localhost:5173"];
 
 app.use(
@@ -71,6 +71,19 @@ app.use(morgan(isProduction ? "combined" : "dev"));
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+
+// ── Database connection (lazy — shared across warm serverless invocations) ────
+let dbConnected = false;
+async function connectDB() {
+  if (dbConnected) return;
+  await mongoose.connect(process.env.MONGODB_URI);
+  dbConnected = true;
+  console.log("Connected to MongoDB");
+}
+app.use(async (_req, _res, next) => {
+  try { await connectDB(); next(); }
+  catch (err) { console.error("MongoDB connection error:", err); next(err); }
+});
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/api/health", (_req, res) => {
@@ -108,16 +121,12 @@ app.use((err, req, res, _next) => {
   }
 });
 
-// ── Database & server startup ─────────────────────────────────────────────────
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`Server listening on port ${PORT} [${isProduction ? "production" : "development"}]`);
-    });
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
+// ── Export app for Vercel serverless ─────────────────────────────────────────
+export default app;
+
+// ── Local dev: start the HTTP server (nodemon / node server.js) ───────────────
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT} [development]`);
   });
+}
