@@ -20,6 +20,7 @@ import { router as packsRouter } from "./src/routes/packs.js";
 import { router as authRouter } from "./src/routes/auth.js";
 import { router as uploadRouter } from "./src/routes/upload.js";
 import { router as renameUUIDRouter } from "./src/routes/renameUUID.js";
+import { router as renameRemainingRouter } from "./src/routes/renameRemaining.js";
 
 // ── Mandatory env guards ──────────────────────────────────────────────────────
 if (!process.env.MONGODB_URI) {
@@ -99,6 +100,7 @@ app.use("/api/packs", packsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/upload", uploadRouter);
 app.use("/api/admin/rename-uuid", renameUUIDRouter);
+app.use("/api/admin/rename-remaining", renameRemainingRouter);
 
 // ── Serve static frontend in production ──────────────────────────────────────
 app.use(express.static(path.join(__dirname, "../dist")));
