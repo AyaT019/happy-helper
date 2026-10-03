@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
-// Connect to MongoDB
-const MONGODB_URI = 'mongodb+srv://fadisahlitn:JmYyHswW5l38cTBo@cluster0.3h9a6.mongodb.net/happy-helper?retryWrites=true&w=majority&appName=Cluster0';
+require('dotenv').config();
+const MONGODB_URI = process.env.MONGODB_URI;
 mongoose.connect(MONGODB_URI, {
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,

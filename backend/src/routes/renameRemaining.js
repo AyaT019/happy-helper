@@ -1,26 +1,8 @@
 import express from 'express';
 import { requireAdmin } from '../middleware/auth.js';
-import mongoose from 'mongoose';
+import { Sticker } from '../models/Sticker.js';
 
 const router = express.Router();
-
-const stickerSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    description: String,
-    price: { type: Number, required: true, default: 0.500 },
-    category: { type: String, required: true },
-    imageUrl: { type: String, required: true },
-    cloudinaryId: { type: String, required: true },
-    isFavorite: { type: Boolean, default: false },
-    originalUrl: { type: String }, // For tracking the actual download URL if needed
-    emoji: { type: String, default: '🖼️' },
-    inStock: { type: Boolean, default: true }
-}, {
-    timestamps: true,
-    collection: 'stickers'
-});
-
-const Sticker = mongoose.models.Sticker || mongoose.model('Sticker', stickerSchema);
 
 const updates = [
     // Aesthetic
