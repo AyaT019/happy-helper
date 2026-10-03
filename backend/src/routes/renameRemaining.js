@@ -98,6 +98,11 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Strip file extension to match how DB stores names
+function stripExt(filename) {
+    return filename.replace(/\.(jpg|jpeg|png|webp|gif)$/i, '').trim();
+}
+
 router.post('/', requireAdmin, async (req, res) => {
     try {
         let matchCount = 0;
@@ -105,49 +110,14 @@ router.post('/', requireAdmin, async (req, res) => {
         const results = [];
 
         for (const update of updates) {
-            const filter = { name: { $regex: escapeRegExp(update.old), $options: 'i' } };
+            // DB stores names without extension, e.g. "téléchargement ($5)" not "téléchargement ($5).webp"
+            const searchName = stripExt(update.old);
+            const filter = { name: { $regex: `^${escapeRegExp(searchName)}$`, $options: 'i' } };
 
-            let stickers = await Sticker.find(filter);
+            const stickers = await Sticker.find(filter);
 
             if (stickers.length === 0) {
-                const urlFilter = { imageUrl: { $regex: escapeRegExp(encodeURI(update.old).replace(/[\(\)]/g, c => `\\${c}`)), $options: 'i' } };
-                const urlStickers = await Sticker.find(urlFilter);
-                if (urlStickers.length === 0) {
-                    const rawUrlFilter = { imageUrl: { $regex: escapeRegExp(update.old), $options: 'i' } };
-                    const rawUrlStickers = await Sticker.find(rawUrlFilter);
-
-                    if (rawUrlStickers.length === 0) {
-                        results.push(`Not found: ${update.old}`);
-                    } else {
-                        for (const sticker of rawUrlStickers) {
-                            matchCount++;
-                            const updated = await Sticker.findByIdAndUpdate(sticker._id, {
-                                $set: {
-                                    name: update.name,
-                                    emoji: update.emoji,
-                                    category: update.category,
-                                    price: 0.500
-                                }
-                            }, { new: true });
-                            updateCount++;
-                            results.push(`Updated ${update.old} -> ${updated.name}`);
-                        }
-                    }
-                } else {
-                    for (const sticker of urlStickers) {
-                        matchCount++;
-                        const updated = await Sticker.findByIdAndUpdate(sticker._id, {
-                            $set: {
-                                name: update.name,
-                                emoji: update.emoji,
-                                category: update.category,
-                                price: 0.500
-                            }
-                        }, { new: true });
-                        updateCount++;
-                        results.push(`Updated ${update.old} -> ${updated.name}`);
-                    }
-                }
+                results.push(`Not found: ${update.old} (searched: "${searchName}")`);
             } else {
                 for (const sticker of stickers) {
                     matchCount++;
@@ -160,7 +130,7 @@ router.post('/', requireAdmin, async (req, res) => {
                         }
                     }, { new: true });
                     updateCount++;
-                    results.push(`Updated ${update.old} -> ${updated.name}`);
+                    results.push(`✅ ${update.old} -> ${updated.name}`);
                 }
             }
         }
