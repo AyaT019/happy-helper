@@ -19,6 +19,7 @@ import { router as categoriesRouter } from "./src/routes/categories.js";
 import { router as packsRouter } from "./src/routes/packs.js";
 import { router as authRouter } from "./src/routes/auth.js";
 import { router as uploadRouter } from "./src/routes/upload.js";
+import { router as renameUUIDRouter } from "./src/routes/renameUUID.js";
 
 // ── Mandatory env guards ──────────────────────────────────────────────────────
 if (!process.env.MONGODB_URI) {
@@ -97,6 +98,7 @@ app.use("/api/categories", categoriesRouter);
 app.use("/api/packs", packsRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/upload", uploadRouter);
+app.use("/api/admin/rename-uuid", renameUUIDRouter);
 
 // ── Serve static frontend in production ──────────────────────────────────────
 app.use(express.static(path.join(__dirname, "../dist")));
