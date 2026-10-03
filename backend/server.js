@@ -48,24 +48,32 @@ app.use(
   })
 );
 
-// ── CORS — lock down to your deployed origin in production ────────────────────
-const allowedOrigins = isProduction
-  ? [
-    process.env.FRONTEND_URL, // Set this in Render: https://your-app.onrender.com
-  ].filter(Boolean)
-  : ["http://localhost:8080", "http://localhost:3000", "http://localhost:5173"];
 
+// ── CORS — lock down to your deployed origin in production ────────────────────
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Render's health checks)
+      // Allow requests with no origin (mobile apps, curl, health checks)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      if (!isProduction) {
+        // Dev: allow all localhost ports
+        const devOrigins = ["http://localhost:8080", "http://localhost:3000", "http://localhost:5173"];
+        if (devOrigins.includes(origin)) return callback(null, true);
+      } else {
+        // Production: allow explicitly configured URL, Vercel preview/prod URLs, and same-host
+        const explicitUrl = process.env.FRONTEND_URL;
+        if (explicitUrl && origin === explicitUrl) return callback(null, true);
+        // Allow any *.vercel.app subdomain (covers production + preview deployments)
+        if (/^https:\/\/[^.]+\.vercel\.app$/.test(origin)) return callback(null, true);
+      }
+
       callback(new Error(`CORS: Origin '${origin}' not allowed`));
     },
     credentials: true,
   })
 );
+
 
 // ── Request logging ───────────────────────────────────────────────────────────
 app.use(morgan(isProduction ? "combined" : "dev"));
