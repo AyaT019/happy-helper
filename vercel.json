@@ -4,11 +4,13 @@
         "happy-helper": {
             "root": ".",
             "framework": "vite",
-            "buildCommand": "npm install && npm run build"
+            "installCommand": "npm install --ignore-scripts",
+            "buildCommand": "npm run build"
         },
         "backend": {
             "root": "backend",
-            "framework": "express"
+            "framework": "express",
+            "installCommand": "npm install"
         }
     },
     "rewrites": [
