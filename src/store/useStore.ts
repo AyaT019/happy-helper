@@ -88,7 +88,7 @@ const mapId = (arr: any[]) => arr.map(item => ({
   ...item,
   id: item._id,
   categories: item.categories?.length ? item.categories : (item.category ? [item.category] : []),
-  comments: item.comments ? item.comments.map((c: any) => ({...c, id: c._id})) : []
+  comments: item.comments ? item.comments.map((c: any) => ({ ...c, id: c._id })) : []
 }));
 
 const fileToDataUrl = (file: File): Promise<string> =>
@@ -108,7 +108,7 @@ export function useStore() {
     } catch { return []; }
   });
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    try { 
+    try {
       const stored = localStorage.getItem(USER_KEY);
       return stored ? JSON.parse(stored) : null;
     } catch { return null; }
@@ -123,10 +123,20 @@ export function useStore() {
         fetch("/api/categories").then(r => r.json()),
         role === "admin" ? fetch("/api/orders", { headers: getHeaders() }).then(r => r.json()).catch(() => []) : Promise.resolve([])
       ]);
+      const validStickers = mapId(Array.isArray(stRes) ? stRes : []);
+
+      // Combine API categories with those implicitly found in stickers
+      const fetchedCats = Array.isArray(caRes) ? caRes.map((c: any) => c.name) : [];
+      const extractedCats = new Set<string>(fetchedCats);
+      validStickers.forEach(s => {
+        if (s.categories) s.categories.forEach((c: string) => extractedCats.add(c));
+        if (s.category) extractedCats.add(s.category);
+      });
+
       setDb({
-        stickers: mapId(Array.isArray(stRes) ? stRes : []),
+        stickers: validStickers,
         packs: mapId(Array.isArray(paRes) ? paRes : []),
-        categories: Array.isArray(caRes) ? caRes.map((c: any) => c.name) : [],
+        categories: Array.from(extractedCats).filter(Boolean).sort(),
         orders: mapId(Array.isArray(orRes) ? orRes : []),
       });
     } catch (e) {
@@ -273,7 +283,7 @@ export function useStore() {
         setCart([]);
         localStorage.removeItem(CART_KEY);
       }
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [cart, currentUser, fetchData]);
 
   const addSticker = useCallback(async (sticker: Omit<Sticker, "id">) => {
@@ -282,7 +292,7 @@ export function useStore() {
         method: "POST", headers: getHeaders(), body: JSON.stringify(sticker)
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const updateSticker = useCallback(async (id: string, updates: Partial<Sticker>) => {
@@ -291,14 +301,14 @@ export function useStore() {
         method: "PUT", headers: getHeaders(), body: JSON.stringify(updates)
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const deleteSticker = useCallback(async (id: string) => {
     try {
       await fetch(`/api/stickers/${id}`, { method: "DELETE", headers: getHeaders() });
       await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const addCategory = useCallback(async (name: string) => {
@@ -307,28 +317,28 @@ export function useStore() {
         method: "POST", headers: getHeaders(), body: JSON.stringify({ name })
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const deleteCategory = useCallback(async (name: string) => {
     try {
       await fetch(`/api/categories/${encodeURIComponent(name)}`, { method: "DELETE", headers: getHeaders() });
       await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const markOrderDone = useCallback(async (id: string) => {
     try {
       await fetch(`/api/orders/${id}/done`, { method: "PATCH", headers: getHeaders() });
       await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const deleteOrder = useCallback(async (id: string) => {
     try {
       await fetch(`/api/orders/${id}`, { method: "DELETE", headers: getHeaders() });
       await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const addReaction = useCallback(async (stickerId: string, type: ReactionType) => {
@@ -337,7 +347,7 @@ export function useStore() {
         method: "POST", headers: getHeaders(), body: JSON.stringify({ type })
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const addComment = useCallback(async (stickerId: string, author: string, text: string) => {
@@ -346,14 +356,14 @@ export function useStore() {
         method: "POST", headers: getHeaders(), body: JSON.stringify({ author, text })
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const deleteComment = useCallback(async (stickerId: string, commentId: string) => {
     try {
       await fetch(`/api/stickers/${stickerId}/comments/${commentId}`, { method: "DELETE", headers: getHeaders() });
       await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const editComment = useCallback(async (stickerId: string, commentId: string, newText: string) => {
@@ -362,7 +372,7 @@ export function useStore() {
         method: "PATCH", headers: getHeaders(), body: JSON.stringify({ text: newText })
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const addPack = useCallback(async (pack: Omit<Pack, "id">) => {
@@ -371,7 +381,7 @@ export function useStore() {
         method: "POST", headers: getHeaders(), body: JSON.stringify(pack)
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const updatePack = useCallback(async (id: string, updates: Partial<Pack>) => {
@@ -380,14 +390,14 @@ export function useStore() {
         method: "PUT", headers: getHeaders(), body: JSON.stringify(updates)
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const deletePack = useCallback(async (id: string) => {
     try {
       await fetch(`/api/packs/${id}`, { method: "DELETE", headers: getHeaders() });
       await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const addPackReaction = useCallback(async (packId: string, type: ReactionType) => {
@@ -396,7 +406,7 @@ export function useStore() {
         method: "POST", headers: getHeaders(), body: JSON.stringify({ type })
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const addPackComment = useCallback(async (packId: string, author: string, text: string) => {
@@ -405,14 +415,14 @@ export function useStore() {
         method: "POST", headers: getHeaders(), body: JSON.stringify({ author, text })
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const deletePackComment = useCallback(async (packId: string, commentId: string) => {
     try {
       await fetch(`/api/packs/${packId}/comments/${commentId}`, { method: "DELETE", headers: getHeaders() });
       await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   const editPackComment = useCallback(async (packId: string, commentId: string, newText: string) => {
@@ -421,7 +431,7 @@ export function useStore() {
         method: "PATCH", headers: getHeaders(), body: JSON.stringify({ text: newText })
       });
       if (r.ok) await fetchData();
-    } catch(e) { console.error(e) }
+    } catch (e) { console.error(e) }
   }, [fetchData]);
 
   return {
